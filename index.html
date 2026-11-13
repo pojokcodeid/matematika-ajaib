@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#5B4BE8">
+<meta name="description" content="Magic Math - an educational math game for preschool and elementary children, grades 1 to 6. 38 levels (8 preschool + 20 elementary + 10 adventure chapters), multiple-choice questions, illustrations, and badges." data-id="Matematika Ajaib - game edukasi matematika untuk anak TK dan sekolah dasar kelas 1 sampai kelas 6. 38 level (8 TK + 20 SD + 10 bab Petualangan), soal pilihan ganda, ilustrasi, dan lencana.">
+<title data-id="Matematika Ajaib — Game Edukasi Matematika TK &amp; SD">Magic Math — Educational Math Game for Preschool &amp; Elementary</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='46' fill='%235B4BE8'/%3E%3Ctext x='50' y='72' font-size='62' text-anchor='middle' fill='%23fff' font-family='sans-serif' font-weight='bold'%3E%3F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<!-- ================= LAYER LATAR (dekorasi) ================= -->
+<div class="sky" aria-hidden="true">
+  <div class="sun"></div>
+  <div class="cloud cloud-1"></div>
+  <div class="cloud cloud-2"></div>
+  <div class="cloud cloud-3"></div>
+  <div class="hill hill-back"></div>
+  <div class="hill hill-front"></div>
+</div>
+
+<canvas id="fx-canvas" class="fx-canvas" aria-hidden="true"></canvas>
+
+<!-- ================= APLIKASI ================= -->
+<div id="app" class="app">
+
+  <!-- ---------- HEADER ---------- -->
+  <header class="topbar" id="topbar">
+    <button class="topbar-btn ghost" id="btn-home" title="Go home" data-id-title="Ke beranda">
+      <span class="ico">🏠</span>
+    </button>
+    <div class="topbar-title">
+      <strong data-id="Matematika Ajaib">Magic Math</strong>
+      <span id="topbar-sub" data-id="Pilih level untuk mulai">Pick a level to start</span>
+    </div>
+    <div class="topbar-right">
+      <button class="chip chip-player" id="chip-player" title="Switch player" data-id-title="Ganti pemain">
+        <span class="chip-avatar" id="chip-avatar">🙂</span>
+        <span class="chip-name" id="chip-name" data-id="Pemain">Player</span>
+      </button>
+      <button class="topbar-btn" id="btn-lang" title="Switch language" data-id-title="Ganti bahasa"><span class="ico">🌐</span></button>
+      <button class="topbar-btn" id="btn-sound" title="Sound" data-id-title="Suara"><span class="ico">🔊</span></button>
+      <button class="topbar-btn" id="btn-settings" title="Settings" data-id-title="Pengaturan"><span class="ico">⚙️</span></button>
+    </div>
+  </header>
+
+  <!-- ================= SCREEN: BERANDA ================= -->
+  <section class="screen is-active" id="screen-home">
+    <div class="home-wrap">
+      <div class="mascot-stage">
+        <div class="mascot-bubble" id="mascot-bubble" data-id="Halo! Aku <b>Bobi</b>. Ayo belajar matematika bersama! 🎉">Hi! I'm <b>Bobi</b>. Let's learn math together! 🎉</div>
+        <div class="mascot" id="mascot-home"></div>
+      </div>
+
+      <h1 class="home-title" data-id="Matematika <span>Ajaib</span>">Magic <span>Math</span></h1>
+      <p class="home-sub" data-id="8 level TK · 20 level SD · 10 bab Petualangan · Cocok usia 4–12 tahun">8 preschool levels · 20 elementary levels · 10 adventure chapters · Ages 4–12</p>
+
+      <div class="home-stats">
+        <div class="stat-card"><span class="stat-ico">⭐</span><b id="home-stars">0</b><small data-id="Bintang">Stars</small></div>
+        <div class="stat-card"><span class="stat-ico">🏅</span><b id="home-badges">0</b><small data-id="Lencana">Badges</small></div>
+        <div class="stat-card"><span class="stat-ico">✅</span><b id="home-done">0/20</b><small data-id="Level Selesai">Levels Done</small></div>
+        <div class="stat-card"><span class="stat-ico">🎯</span><b id="home-acc">0%</b><small data-id="Rata-rata Benar">Accuracy</small></div>
+      </div>
+
+      <div class="home-actions">
+        <button class="btn btn-primary btn-xl" id="btn-play" data-id="▶️ Mulai Belajar">▶️ Start Learning</button>
+        <button class="btn btn-primary btn-tk" id="btn-play-tk" data-id="🧸 Mulai TK">🧸 Start Preschool</button>
+        <button class="btn btn-primary btn-adv" id="btn-play-adv" data-id="🧭 Mulai Petualangan">🧭 Start Adventure</button>
+        <button class="btn btn-ghost" id="btn-levels" data-id="🗺️ Pilih Level">🗺️ Choose Level</button>
+        <button class="btn btn-ghost" id="btn-stats" data-id="📊 Statistik">📊 Statistics</button>
+        <button class="btn btn-ghost" id="btn-leaderboard" data-id="🏆 Papan Peringkat">🏆 Leaderboard</button>
+        <button class="btn btn-ghost" id="btn-help" data-id="❓ Cara Bermain">❓ How to Play</button>
+      </div>
+      <p class="home-switch">
+        <span data-id="Bukan">Not</span> <span id="switch-name">you</span>?
+        <button class="link-btn" id="btn-switch-player" data-id="👥 Ganti Pemain">👥 Switch Player</button>
+      </p>
+    </div>
+  </section>
+
+  <!-- ================= SCREEN: PILIH PEMAIN ================= -->
+  <section class="screen" id="screen-players">
+    <div class="page">
+      <div class="page-head">
+        <h2 data-id="👥 Pilih Pemain">👥 Choose Player</h2>
+        <p data-id="Satu perangkat bisa dipakai banyak anak. Tiap pemain punya progresnya sendiri.">One device can be shared by many kids. Each player has their own progress.</p>
+      </div>
+
+      <div class="player-grid" id="player-grid"></div>
+
+      <button class="btn btn-primary btn-lg btn-block" id="btn-add-player" data-id="➕ Tambah Pemain Baru">➕ Add New Player</button>
+
+      <div class="card" id="card-new-player" hidden>
+        <h3 data-id="🆕 Pemain Baru">🆕 New Player</h3>
+        <div class="field">
+          <label for="inp-pname" data-id="Nama">Name</label>
+          <input type="text" id="inp-pname" maxlength="16" placeholder="Child's name" data-id="Nama anak" autocomplete="off">
+        </div>
+        <div class="field">
+          <label data-id="Kelas">Grade</label>
+          <div class="grade-picker" id="grade-picker"></div>
+        </div>
+        <div class="field">
+          <label data-id="Avatar">Avatar</label>
+          <div class="avatar-picker" id="new-avatar-picker"></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-ghost" id="btn-cancel-player" data-id="Batal">Cancel</button>
+          <button class="btn btn-primary" id="btn-save-player" data-id="✅ Simpan &amp; Main">✅ Save &amp; Play</button>
+        </div>
+      </div>
+
+      <div class="result-actions">
+        <button class="btn btn-ghost" id="btn-players-close" data-id="← Kembali ke Beranda">← Back to Home</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SCREEN: PAPAN PERINGKAT ================= -->
+  <section class="screen" id="screen-leaderboard">
+    <div class="page">
+      <div class="page-head">
+        <h2 data-id="🏆 Papan Peringkat">🏆 Leaderboard</h2>
+        <p id="lb-sub" data-id="Siapa yang paling Nilainya?">Who has the highest score?</p>
+      </div>
+
+      <div class="seg seg-wide" id="lb-tabs">
+        <button data-tab="local" class="on" data-id="📱 Perangkat Ini">📱 This Device</button>
+        <button data-tab="online" data-id="🌐 Semua Pemain">🌐 All Players</button>
+      </div>
+
+      <div class="lb-podium" id="lb-podium"></div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table class="tbl tbl-lb">
+            <thead><tr><th>#</th><th data-id="Pemain">Player</th><th>⭐</th><th>✅</th><th>🎯</th><th data-id="Poin">Points</th></tr></thead>
+            <tbody id="lb-tbody"></tbody>
+          </table>
+        </div>
+        <p class="hint-text" id="lb-note"></p>
+      </div>
+
+      <div class="result-actions">
+        <button class="btn btn-primary" id="btn-lb-close" data-id="← Kembali">← Back</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SCREEN: PILIH LEVEL ================= -->
+  <section class="screen" id="screen-levels">
+    <div class="page">
+      <div class="page-head">
+        <h2 data-id="🗺️ Peta Level">🗺️ Level Map</h2>
+        <p data-id="Selesaikan level untuk membuka level berikutnya. Kumpulkan bintang sebanyak-banyaknya!">Finish a level to unlock the next one. Collect as many stars as you can!</p>
+      </div>
+      <div class="seg seg-wide" id="track-tabs">
+        <button data-track="sd" class="on" data-id="🎒 SD (Kelas 1–6)">🎒 Elementary (Grades 1–6)</button>
+        <button data-track="tk" data-id="🧸 TK (4–6 tahun)">🧸 Preschool (ages 4–6)</button>
+        <button data-track="adv" data-id="🧭 Petualangan">🧭 Adventure</button>
+      </div>
+      <div class="level-progress-wrap">
+        <div class="progressbar"><div class="progressbar-fill" id="levels-progress"></div></div>
+        <span id="levels-progress-text" data-id="0 dari 20 level selesai">0 of 20 levels done</span>
+      </div>
+
+      <!-- Peta jelajah khusus jalur Petualangan (muncul saat tab 🧭 aktif) -->
+      <div class="adv-map" id="adv-map" hidden aria-label="Adventure map"></div>
+      <p class="map-legend" id="adv-map-legend" hidden>
+        <span data-id="📍 Kamu di sini">📍 You are here</span>
+        <span data-id="🔒 Bab terkunci">🔒 Locked chapter</span>
+        <span data-id="✓ Bab selesai">✓ Chapter cleared</span>
+        <span data-id="⭐ Bintang terbaik">⭐ Best stars</span>
+      </p>
+
+      <div class="level-grid" id="level-grid"></div>
+    </div>
+  </section>
+
+  <!-- ================= SCREEN: MAIN ================= -->
+  <section class="screen screen-play" id="screen-play">
+    <div class="play-top" id="play-top">
+      <div class="play-top-row">
+        <button class="topbar-btn ghost" id="btn-quit" title="Exit the level" data-id-title="Keluar dari level">✕</button>
+        <div class="play-level-name" id="play-level-name" data-id="Level 1">Level 1</div>
+        <div class="play-score"><span>⭐</span><b id="play-score">0</b></div>
+      </div>
+      <div class="play-top-row">
+        <div class="progressbar progressbar-lg"><div class="progressbar-fill" id="play-progress"></div></div>
+        <span class="play-qnum" id="play-qnum">1/10</span>
+      </div>
+      <div class="timer" id="timer">
+        <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+        <span class="timer-label" id="timer-label">20s</span>
+      </div>
+      <div class="hearts" id="hearts"></div>
+      <div class="play-bobi" id="play-bobi">
+        <div class="play-bobi-art" id="play-bobi-art"></div>
+        <div class="play-bobi-speech" id="play-bobi-speech" data-id="Ayo semangat! Kamu pasti bisa! ⭐">Come on, you can do it! ⭐</div>
+      </div>
+    </div>
+
+    <!-- ================= 2D ADVENTURE STAGE (Khusus Jalur Petualangan 🧭) ================= -->
+    <div class="adv-play-stage" id="adv-play-stage" hidden>
+      <!-- Topbar ringkas petualangan -->
+      <div class="adv-stage-hud">
+        <button class="adv-hud-btn ghost" id="btn-adv-quit" title="Exit the chapter" data-id-title="Keluar dari Bab">✕</button>
+        <div class="adv-hud-title" id="adv-hud-title">
+          <span class="adv-hud-badge" id="adv-hud-badge" data-id="🧭 Bab 1">🧭 Chapter 1</span>
+          <b id="adv-hud-name" data-id="Desa Damai">Peaceful Village</b>
+        </div>
+        <div class="adv-hud-actions">
+          <button class="adv-hud-btn map-btn" id="btn-adv-world-map" title="Open the 10-chapter world map" data-id-title="Buka Peta Dunia 10 Bab">
+            🗺️ <span data-id="Peta Dunia">World Map</span>
+          </button>
+          <div class="adv-hud-score"><span>⭐</span><b id="adv-hud-score">0</b></div>
+        </div>
+      </div>
+
+      <!-- Kanvas Peta 2D Interaktif -->
+      <div class="adv-stage-viewport" id="adv-stage-viewport">
+        <div class="adv-stage-canvas-wrap" id="adv-stage-canvas-wrap">
+          <svg class="adv-stage-svg" id="adv-stage-svg" viewBox="0 0 1000 220" preserveAspectRatio="none" aria-label="2D adventure map">
+            <!-- Isi SVG peta 2D di-render dinamis oleh UI -->
+          </svg>
+        </div>
+      </div>
+
+      <!-- Banner status langkah & pertemuan di peta -->
+      <div class="adv-step-bar" id="adv-step-bar">
+        <div class="adv-step-left">
+          <span class="adv-step-indicator" id="adv-step-indicator" data-id="📍 Pos 1 dari 10">📍 Stop 1 of 10</span>
+          <span class="adv-step-encounter" id="adv-step-encounter" data-id="Tantangan: Membuka bekal petualangan">Challenge: pack your adventure supplies</span>
+        </div>
+        <div class="adv-step-hearts" id="adv-step-hearts"></div>
+      </div>
+
+      <!-- Timer petualangan -->
+      <div class="adv-timer" id="adv-timer">
+        <div class="adv-timer-track"><div class="adv-timer-fill" id="adv-timer-fill"></div></div>
+        <span class="adv-timer-label" id="adv-timer-label">20s</span>
+      </div>
+    </div>
+
+    <div class="play-main">
+      <div class="q-card" id="q-card">
+        <div class="q-art" id="q-art"></div>
+        <div class="q-text" id="q-text" data-id="Memuat soal…">Loading question…</div>
+        <div class="q-topic" id="q-topic"></div>
+      </div>
+
+      <div class="options" id="options"></div>
+
+      <div class="play-foot">
+        <button class="btn btn-soft" id="btn-hint" data-id="💡 Petunjuk">💡 Hint</button>
+        <button class="btn btn-soft" id="btn-skip" data-id="⏭️ Lewati">⏭️ Skip</button>
+      </div>
+    </div>
+
+    <!-- Overlay umpan balik -->
+    <div class="feedback" id="feedback">
+      <div class="feedback-box" id="feedback-box">
+        <div class="feedback-emoji" id="feedback-emoji">🎉</div>
+        <div class="feedback-title" id="feedback-title" data-id="Benar!">Correct!</div>
+        <div class="feedback-sub" id="feedback-sub"></div>
+        <button class="btn btn-primary btn-lg" id="btn-next" data-id="Lanjut ➜">Next ➜</button>
+      </div>
+    </div>
+
+    <!-- Modal Peta Dunia Petualangan (saat tombol '🗺️ Peta Dunia' ditekan) -->
+    <div class="modal adv-world-modal" id="adv-world-modal" hidden>
+      <div class="modal-box adv-world-box">
+        <div class="adv-world-head">
+          <div class="adv-world-title">
+            <span class="adv-world-ico">🧭</span>
+            <div>
+              <h3 data-id="Peta Kerajaan Petualangan">Adventure Kingdom Map</h3>
+              <p data-id="Perjalanan 10 bab dari Desa Damai hingga Sarang Naga">A 10-chapter journey from Peaceful Village to Dragon's Lair</p>
+            </div>
+          </div>
+          <button class="adv-world-close" id="btn-adv-world-close" title="Close the map" data-id-title="Tutup peta">✕</button>
+        </div>
+        <div class="adv-world-map-wrap" id="adv-world-map-wrap">
+          <!-- Peta dunia 10 bab di-render oleh UI -->
+        </div>
+        <div class="adv-world-foot">
+          <span class="adv-world-stat" id="adv-world-summary" data-id="Bab 1 dari 10 · ⭐ 0 Bintang">Chapter 1 of 10 · ⭐ 0 Stars</span>
+          <button class="btn btn-primary" id="btn-adv-world-resume" data-id="🎮 Lanjut Bermain">🎮 Keep Playing</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SCREEN: HASIL ================= -->
+  <section class="screen" id="screen-result">
+    <div class="page result-page">
+      <div class="result-card">
+        <div class="result-confetti" id="result-confetti"></div>
+        <div class="result-mascot" id="result-mascot"></div>
+        <div class="result-stars" id="result-stars"></div>
+        <h2 id="result-title" data-id="Level Selesai!">Level Complete!</h2>
+        <p id="result-sub" data-id="Kamu hebat!">You're amazing!</p>
+
+        <div class="result-grid">
+          <div class="result-box"><span>✅</span><b id="result-correct">0/10</b><small data-id="Benar">Correct</small></div>
+          <div class="result-box"><span>🎯</span><b id="result-acc">0%</b><small data-id="Ketelitian">Accuracy</small></div>
+          <div class="result-box"><span>⏱️</span><b id="result-time">0s</b><small data-id="Waktu">Time</small></div>
+          <div class="result-box"><span>⭐</span><b id="result-score">0</b><small data-id="Poin">Points</small></div>
+        </div>
+
+        <div class="result-best" id="result-best"></div>
+        <div class="result-fact" id="result-fact"></div>
+        <div class="result-badges" id="result-badges"></div>
+
+        <div class="result-actions">
+          <button class="btn btn-primary" id="btn-retry" data-id="🔁 Ulangi">🔁 Retry</button>
+          <button class="btn btn-ghost" id="btn-nextlevel" data-id="➡️ Level Berikutnya">➡️ Next Level</button>
+          <button class="btn btn-ghost" id="btn-tomap" data-id="🗺️ Peta Level">🗺️ Level Map</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SCREEN: PENGATURAN ================= -->
+  <section class="screen" id="screen-settings">
+    <div class="page narrow">
+      <div class="page-head"><h2 data-id="⚙️ Pengaturan">⚙️ Settings</h2><p data-id="Atur game sesuai kebutuhanmu.">Customize the game to your needs.</p></div>
+
+      <div class="card">
+        <h3 data-id="🌐 Bahasa">🌐 Language</h3>
+        <div class="seg" id="seg-language">
+          <button data-lang="en" class="on">English</button>
+          <button data-lang="id">Bahasa Indonesia</button>
+        </div>
+        <p class="hint-text" data-id="Game langsung memuat ulang supaya semua soal, petunjuk, dan label ikut berganti.">The game reloads right away so every question and label switches with it.</p>
+      </div>
+
+      <div class="card">
+        <h3 data-id="👤 Pemain">👤 Player</h3>
+        <div class="field">
+          <label for="inp-name" data-id="Nama pemain">Player name</label>
+          <input type="text" id="inp-name" maxlength="16" placeholder="Your name" data-id="Nama kamu">
+        </div>
+        <div class="field">
+          <label data-id="Kelas">Grade</label>
+          <div class="grade-picker" id="grade-picker-settings"></div>
+        </div>
+        <div class="field">
+          <label data-id="Avatar">Avatar</label>
+          <div class="avatar-picker" id="avatar-picker"></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-soft" id="btn-manage-players" data-id="👥 Ganti / Tambah Pemain">👥 Switch / Add Player</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 data-id="⏱️ Waktu per soal">⏱️ Time per question</h3>
+        <div class="field">
+          <label for="inp-time"><span data-id="Waktu:">Time:</span> <b id="time-val" data-id="20 detik">20 seconds</b></label>
+          <input type="range" id="inp-time" min="5" max="180" step="5" value="20">
+          <div class="range-scale"><span data-id="5s (sulit)">5s (hard)</span><span data-id="180s (santai)">180s (relaxed)</span></div>
+        </div>
+        <label class="switch"><input type="checkbox" id="inp-time-unlimited"><span class="slider"></span><span class="switch-label" data-id="∞ Tanpa batas waktu">∞ Unlimited time</span></label>
+        <p class="hint-text" data-id="Jawaban yang benar sebelum waktu habis mendapat bonus poin. Kalau waktu habis, tidak ada bonus. Saat <b>Tanpa batas</b> aktif, tidak ada hitung mundur dan bonus waktu dimatikan (poin tetap dari jawaban benar).">Correct answers before the timer runs out earn bonus points. When time is up there is no bonus. With <b>Unlimited time</b> on there is no countdown and the time bonus is turned off (points still come from correct answers).</p>
+      </div>
+
+      <div class="card">
+        <h3 data-id="🔊 Suara &amp; Musik">🔊 Sound &amp; Music</h3>
+        <label class="switch"><input type="checkbox" id="inp-sfx" checked><span class="slider"></span><span class="switch-label" data-id="Efek suara">Sound effects</span></label>
+        <label class="switch"><input type="checkbox" id="inp-music" checked><span class="slider"></span><span class="switch-label" data-id="Musik latar">Background music</span></label>
+      </div>
+
+      <div class="card">
+        <h3 data-id="💡 Petunjuk">💡 Hints</h3>
+        <label class="switch"><input type="checkbox" id="inp-hide-hint"><span class="slider"></span><span class="switch-label" data-id="🙈 Sembunyikan petunjuk">🙈 Hide hints</span></label>
+        <p class="hint-text" data-id="Saat aktif, tombol <b>💡 Petunjuk</b> tidak muncul saat bermain dan petunjuk tidak ditampilkan di umpan balik jawaban. Pintasan keyboard <b>H</b> juga ikut nonaktif. Bisa dinyalakan lagi kapan saja.">While this is on, the <b>💡 Hint</b> button does not appear during play and no hint is shown in the answer feedback. The <b>H</b> keyboard shortcut is disabled too. You can turn it back on any time.</p>
+      </div>
+
+      <div class="card">
+        <h3 data-id="🧠 Kesulitan">🧠 Difficulty</h3>
+        <div class="seg" id="seg-difficulty">
+          <button data-diff="santai" data-id="Santai">Relaxed</button>
+          <button data-diff="sedang" class="on" data-id="Sedang">Normal</button>
+          <button data-diff="sulit" data-id="Sulit">Hard</button>
+        </div>
+        <p class="hint-text" data-id="Menentukan berapa bonus waktu yang kamu dapat untuk menjawab benar.">Sets how big a time bonus you get for answering correctly.</p>
+      </div>
+
+      <div class="card">
+        <h3 data-id="💾 Data">💾 Data</h3>
+        <p class="hint-text" data-id="Progresmu disimpan otomatis di perangkat ini (database SQLite).
+        Tiap pemain punya salinan sendiri, jadi menghapus satu tidak merusak yang lain.">Your progress is saved automatically on this device (SQLite database).
+        Each player has their own copy, so deleting one never damages the others.</p>
+        <div class="btn-row">
+          <button class="btn btn-soft" id="btn-export" data-id="⬇️ Ekspor Progres">⬇️ Export Progress</button>
+          <button class="btn btn-soft" id="btn-import" data-id="⬆️ Impor Progres">⬆️ Import Progress</button>
+          <button class="btn btn-danger" id="btn-reset" data-id="🗑️ Hapus Progres Pemain Ini">🗑️ Delete This Player's Progress</button>
+          <button class="btn btn-danger" id="btn-reset-all" data-id="💣 Hapus Semua Pemain">💣 Delete All Players</button>
+        </div>
+        <input type="file" id="file-import" accept="application/json" hidden>
+      </div>
+
+      <div class="result-actions">
+        <button class="btn btn-primary" id="btn-settings-close" data-id="✅ Simpan &amp; Kembali">✅ Save &amp; Back</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SCREEN: STATISTIK ================= -->
+  <section class="screen" id="screen-stats">
+    <div class="page">
+      <div class="page-head">
+        <h2 data-id="📊 Statistik">📊 Statistics</h2>
+        <p id="stats-player" data-id="Pemain">Player</p>
+      </div>
+      <div class="card">
+        <h3 data-id="🏆 Peringkat Level">🏆 Level Ranking</h3>
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead><tr><th data-id="Level">Level</th><th data-id="Topik">Topic</th><th data-id="⭐ Terbaik">⭐ Best</th><th data-id="🎯 Benar">🎯 Correct</th><th data-id="🔁 Dicoba">🔁 Tried</th><th data-id="Terakhir">Last</th></tr></thead>
+            <tbody id="stats-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3 data-id="🏅 Lencana">🏅 Badges</h3>
+        <div class="badge-grid" id="badge-grid"></div>
+      </div>
+      <div class="card">
+        <h3 data-id="📈 Riwayat 20 Permainan Terakhir">📈 Last 20 Games</h3>
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead><tr><th>#</th><th data-id="Level">Level</th><th data-id="Hasil">Result</th><th data-id="Benar">Correct</th><th data-id="Waktu">Time</th><th data-id="Poin">Points</th><th data-id="Tanggal">Date</th></tr></thead>
+            <tbody id="history-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="result-actions">
+        <button class="btn btn-primary" id="btn-stats-close" data-id="← Kembali">← Back</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SCREEN: BANTUAN ================= -->
+  <section class="screen" id="screen-help">
+    <div class="page narrow">
+      <div class="page-head"><h2 data-id="❓ Cara Bermain">❓ How to Play</h2><p data-id="Semua aturan singkatnya ada di sini.">All the rules in short, right here.</p></div>
+      <div class="card help-card">
+        <div class="help-item"><span class="help-ico">🌐</span><div><b data-id="🌐 Bahasa">🌐 Language</b><p data-id="Tekan tombol <b>🌐</b> di bilah atas (atau pilih bahasa di ⚙️ Pengaturan) untuk berpindah antara <b>English</b> dan <b>Bahasa Indonesia</b>. Pilihanmu disimpan, jadi game membukanya dengan bahasa yang sama lain kali.">Tap the <b>🌐</b> button in the top bar (or pick a language in ⚙️ Settings) to switch between <b>English</b> and <b>Bahasa Indonesia</b>. Your choice is remembered, so the game opens in that language next time.</p></div></div>
+        <div class="help-item"><span class="help-ico">🧸</span><div><b data-id="Jalur TK &amp; SD">Preschool &amp; Elementary tracks</b><p data-id="Ada <b>8 level TK</b> (usia 4–6 tahun, serba gambar) dan <b>20 level SD</b> (kelas 1–6). Pilih jalurnya di <b>🗺️ Peta Level</b>, atau tekan tombol <b>🧸 Mulai TK</b> / <b>▶️ Mulai Belajar</b> di beranda. Progres tiap jalur disimpan terpisah.">There are <b>8 preschool levels</b> (ages 4–6, all picture based) and <b>20 elementary levels</b> (grades 1–6). Pick a track on the <b>🗺️ Level Map</b>, or press <b>🧸 Start Preschool</b> / <b>▶️ Start Learning</b> on the home screen. Each track keeps its own progress.</p></div></div>
+        <div class="help-item"><span class="help-ico">🧭</span><div><b data-id="Jalur Petualangan Matematika">Math Adventure track</b><p data-id="Jalur ketiga bergaya <b>petualangan</b>: <b>10 bab</b> perjalanan dari Desa Damai, Hutan Terlarang, Gua Harta Karun, sampai Sarang Naga. Tiap bab punya <b>cerita pembuka</b> dan soal-soal cerita yang makin menantang. Pilihannya berupa <b>peta jelajah</b> — jalan setapak menghubungkan Bab 1 sampai Bab 10, penanda <b>📍</b> menunjukkan posisimu sekarang, bab terkunci harus dibuka satu per satu, dan bab yang sudah selesai diberi tanda ✓. Buka lewat tab <b>🧭 Petualangan</b> di Peta Level atau tombol <b>🧭 Mulai Petualangan</b> di beranda. Progresnya terpisah dari TK dan SD.">The third track is an <b>adventure</b>: <b>10 chapters</b> travelling from Peaceful Village and the Forbidden Forest all the way to Dragon's Lair. Every chapter has an <b>opening story</b> and word problems that get tougher as you go. The map is an <b>exploration path</b> — a trail links Chapter 1 to Chapter 10, the <b>📍</b> marker shows where you are now, locked chapters open one by one, and finished chapters get a ✓. Open it from the <b>🧭 Adventure</b> tab on the Level Map or the <b>🧭 Start Adventure</b> button on the home screen. Its progress is separate from preschool and elementary.</p></div></div>
+        <div class="help-item"><span class="help-ico">1️⃣</span><div><b data-id="Pilih level">Pick a level</b><p data-id="Setiap jalur punya kesulitan yang terus meningkat. Selesaikan satu level untuk membuka yang berikutnya.">Each track gets steadily harder. Finish one level to unlock the next.</p></div></div>
+        <div class="help-item"><span class="help-ico">2️⃣</span><div><b data-id="Jawab soal">Answer questions</b><p data-id="Setiap level berisi 10 soal acak, masing-masing dengan <b>4 pilihan jawaban</b>. Pilih satu jawaban yang benar.">Each level has 10 random questions, each with <b>4 answer choices</b>. Pick the one that is correct.</p></div></div>
+        <div class="help-item"><span class="help-ico">3️⃣</span><div><b data-id="Perhatikan waktu">Watch the clock</b><p data-id="Ada hitung mundur di setiap soal. Jawaban benar <b>sebelum waktu habis</b> dapat bonus poin lebih besar. Durasi (5–180 detik) atau <b>∞ Tanpa batas waktu</b> bisa diatur di menu ⚙️ Pengaturan. Tanpa batas cocok untuk anak TK yang baru belajar.">Every question counts down. A correct answer <b>before time runs out</b> earns a bigger point bonus. The duration (5–180 seconds) or <b>∞ Unlimited time</b> can be changed in ⚙️ Settings. Unlimited suits young children who are just starting out.</p></div></div>
+        <div class="help-item"><span class="help-ico">💛</span><div><b data-id="Hati / nyawa">Hearts / lives</b><p data-id="Kamu punya 3 hati. Jawaban salah mengurangi 1 hati. Jika hati habis, permainan selesai lebih cepat.">You have 3 hearts. A wrong answer costs 1 heart. When the hearts run out the level ends early.</p></div></div>
+        <div class="help-item"><span class="help-ico">🔥</span><div><b data-id="Beruntun (combo)">Streak (combo)</b><p data-id="Jawaban benar beruntun menambah pengali skor: 1x → 2x → 3x → 4x.">A run of correct answers raises your score multiplier: 1x → 2x → 3x → 4x.</p></div></div>
+        <div class="help-item"><span class="help-ico">⭐</span><div><b data-id="Bintang">Stars</b><p data-id="Setiap level punya maksimal 3 bintang. Makin banyak jawaban benar dan makin cepat, makin banyak bintang.">Every level awards up to 3 stars. The more correct answers and the faster you are, the more stars you earn.</p></div></div>
+        <div class="help-item"><span class="help-ico">💡</span><div><b data-id="Petunjuk">Hints</b><p data-id="Butuh bantuan? Tombol 💡 Petunjuk mengurangi poin sedikit, tapi tetap bisa dipakai. Tombol ini bisa disembunyikan lewat ⚙️ Pengaturan → 💡 Petunjuk (berguna untuk anak yang sudah percaya diri).">Need a hand? The 💡 Hint button costs a few points but can be used whenever you like. You can hide it under ⚙️ Settings → 💡 Hints (handy for confident kids).</p></div></div>
+        <div class="help-item"><span class="help-ico">👥</span><div><b data-id="Banyak pemain">Many players</b><p data-id="Satu perangkat bisa dipakai beberapa anak. Tekan nama di kanan atas (atau 👥 Ganti Pemain) untuk berpindah. Tiap pemain punya <b>bintang, level, riwayat, dan lencana sendiri</b>, jadi tinggal lanjutkan dari tempat terakhir.">One device can be shared by several kids. Tap the name at the top right (or 👥 Switch Player) to change. Every player has their own <b>stars, levels, history, and badges</b>, so you can just pick up where you left off.</p></div></div>
+        <div class="help-item"><span class="help-ico">🏆</span><div><b data-id="Papan Peringkat">Leaderboard</b><p data-id="Tab <b>📱 Perangkat Ini</b> menampilkan semua pemain di perangkat ini. Kalau game dijalankan lewat <code>server.js</code>, tab <b>🌐 Semua Pemain</b> menampilkan peringkat dari HP dan komputer lain di jaringan yang sama.">The <b>📱 This Device</b> tab shows every player on this device. When the game runs through <code>server.js</code>, the <b>🌐 All Players</b> tab shows the ranking from phones and computers on the same network.</p></div></div>
+      </div>
+      <div class="result-actions">
+        <button class="btn btn-primary" id="btn-help-close" data-id="← Kembali">← Back</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ================= MODAL ================= -->
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <div class="modal-emoji" id="modal-emoji">🎮</div>
+    <h3 id="modal-title" data-id="Judul">Title</h3>
+    <p id="modal-text" data-id="Teks">Text</p>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Loader -->
+<div class="loader" id="loader">
+  <div class="loader-mascot" id="loader-mascot"></div>
+  <p id="loader-text" data-id="Menyiapkan database…">Preparing database…</p>
+</div>
+
+<!-- ================= PUSTAKA ================= -->
+<script src="assets/vendor/sql-wasm-binary.js"></script>
+<script src="assets/vendor/sql-wasm.js"></script>
+
+<!-- ================= SKRIP GAME ================= -->
+<script src="assets/js/i18n.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/utils.js"></script>
+<script src="assets/js/art.js"></script>
+<script src="assets/js/audio.js"></script>
+<script src="assets/js/topics.js"></script>
+<script src="assets/js/db.js"></script>
+<script src="assets/js/game.js"></script>
+<script src="assets/js/ui.js"></script>
+<script src="assets/js/main.js"></script>
+</body>
+</html>
