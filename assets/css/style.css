@@ -34,6 +34,17 @@
 
   --font: "Nunito", "Baloo 2", "Comic Sans MS", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
 
+  /* Design system — rancangan_ui.md §22.2 (dipakai mode Petualangan) */
+  --adv-primary: #2864C5;
+  --adv-primary-d: #1B4690;
+  --adv-secondary: #42B7E9;
+  --adv-success: #4CAF50;
+  --adv-warning: #FFC83D;
+  --adv-danger: #F05D68;
+  --adv-bg: #EAF6FF;
+  --adv-card: #FFFFFF;
+  --adv-text: #24345B;
+  --adv-locked: #929BA8;
   --topbar-h: 66px;
 }
 
@@ -393,35 +404,77 @@ strong, b { font-weight: 800; }
 }
 
 /* ============================================================
- *  PETA PETUALANGAN (jalur 🧭) — tampilan menelusuri peta:
- *  jalan berkelok, simpul tiap bab, penanda "kamu di sini".
+ *  PETA PETUALANGAN (jalur 🧭) — rancangan_ui.md §22.5 & §22.6
+ *  Dunia fantasi, jalan setapak, simpul bab dengan status jelas
+ *  (terkunci / tersedia / selesai / sempurna), karakter pemain,
+ *  peti reward, indikator progres, plus panel detail bab.
  * ============================================================ */
+
+/* --- Tata letak: peta (kiri) + detail bab (kanan) di layar lebar --- */
+.adv-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+  margin-bottom: 14px;
+}
+.adv-layout[hidden] { display: none !important; }
+.adv-map-col { min-width: 0; }
+
+@media (min-width: 1040px) {
+  .adv-layout { grid-template-columns: minmax(0, 1fr) 340px; }
+}
+
+/* --- Peta dunia fantasi (22.5) --- */
 .adv-map {
   position: relative;
   width: 100%;
   height: 1150px;
-  margin-bottom: 14px;
-  border-radius: 26px;
+  border-radius: 30px;
   overflow: hidden;
-  border: 5px solid #B4DFC7;
+  border: 5px solid #BFE3FF;
   box-shadow: var(--sh-md);
   background:
-    radial-gradient(120% 55% at 50% -8%, rgba(255, 255, 255, .75), transparent 60%),
-    linear-gradient(165deg, #E9F8EE 0%, #CFEEDC 45%, #FDF0DA 100%);
+    radial-gradient(120% 55% at 50% -8%, rgba(255, 255, 255, .8), transparent 60%),
+    linear-gradient(168deg, #EAF6FF 0%, #D6EEFF 40%, #E6F8EC 74%, #FFF6E2 100%);
 }
 .adv-map[hidden], .level-grid[hidden], .map-legend[hidden] { display: none !important; }
 
-/* kirau danau (kiri bawah) dan bukit (kanan tengah) */
+/* kirau danau (kiri bawah) dan kabut (kanan tengah) */
 .adv-map::before {
   content: ""; position: absolute; left: -10%; bottom: -8%;
   width: 52%; height: 30%; border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(112, 190, 255, .5), rgba(112, 190, 255, 0));
+  background: radial-gradient(closest-side, rgba(112, 190, 255, .55), rgba(112, 190, 255, 0));
 }
 .adv-map::after {
   content: ""; position: absolute; right: -8%; top: 30%;
   width: 44%; height: 20%; border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(255, 255, 255, .7), rgba(255, 255, 255, 0));
+  background: radial-gradient(closest-side, rgba(255, 255, 255, .75), rgba(255, 255, 255, 0));
 }
+
+/* indikator progres di pojok kanan atas peta */
+.adv-map-progress {
+  position: absolute; top: 12px; right: 12px; z-index: 5;
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255, 255, 255, .95);
+  border: 3px solid #CFE6FF;
+  border-radius: 100px;
+  padding: 6px 12px;
+  box-shadow: var(--sh-sm);
+  font-size: 12.5px; font-weight: 900; color: var(--adv-text);
+}
+.adv-map-progress .amp-bar {
+  display: inline-block;
+  width: 72px; height: 9px; border-radius: 100px;
+  background: #E1EDF9; overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(36, 52, 91, .14);
+}
+.adv-map-progress .amp-bar .progressbar-fill {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, var(--adv-secondary), var(--adv-primary));
+}
+.adv-map-progress .amp-stars { color: #A97A00; }
+@media (max-width: 560px) { .adv-map-progress .amp-stars { display: none; } }
 
 /* jalan setapak */
 .map-trail { position: absolute; inset: 0; z-index: 1; }
@@ -437,34 +490,35 @@ strong, b { font-weight: 800; }
 }
 .trail-done {
   fill: none;
-  stroke: #2FBF81;
+  stroke: var(--adv-success);
   stroke-width: 10;
   stroke-linecap: round;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
-  filter: drop-shadow(0 2px 2px rgba(47, 191, 129, .35));
+  filter: drop-shadow(0 2px 2px rgba(76, 175, 80, .4));
 }
 
 .map-deco {
   position: absolute; z-index: 2;
   transform: translate(-50%, -50%);
   pointer-events: none; user-select: none;
-  opacity: .85;
+  opacity: .88;
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .12));
 }
 .map-badge {
   position: absolute; top: 12px; left: 12px; z-index: 5;
-  background: rgba(255, 255, 255, .92);
-  color: var(--violet);
+  background: rgba(255, 255, 255, .95);
+  color: var(--adv-primary);
+  border: 3px solid #CFE6FF;
   font-size: 13px; font-weight: 900;
   padding: 6px 13px; border-radius: 100px;
   box-shadow: var(--sh-sm);
 }
 
-/* simpul bab */
+/* --- Simpul bab (22.5: locked / available / completed / perfect) --- */
 .map-node {
   position: absolute; z-index: 3;
-  width: 100px; padding: 0; border: 0;
+  width: 108px; padding: 0; border: 0;
   background: transparent;
   transform: translate(-50%, -36px);
   text-align: center; cursor: pointer;
@@ -480,9 +534,9 @@ strong, b { font-weight: 800; }
   width: 72px; height: 72px; margin: 0 auto;
   border-radius: 50%;
   background: #fff;
-  border: 4px solid var(--node-color, var(--violet));
+  border: 4px solid var(--node-color, var(--adv-primary));
   box-shadow: var(--sh-md);
-  transition: transform .15s;
+  transition: transform .15s, border-color .2s, box-shadow .2s;
 }
 .map-node:hover .node-pin { transform: translateY(-4px) scale(1.06); }
 .map-node:active .node-pin { transform: translateY(1px) scale(.97); }
@@ -490,28 +544,34 @@ strong, b { font-weight: 800; }
 .map-node .node-lock {
   position: absolute; inset: -4px;
   display: grid; place-items: center;
-  background: rgba(90, 90, 110, .55);
+  background: rgba(146, 155, 168, .72);
   border-radius: 50%;
   font-size: 26px;
 }
 .map-node .node-check {
   position: absolute; right: -6px; bottom: -4px;
   width: 24px; height: 24px; border-radius: 50%;
-  background: var(--green); color: #fff;
+  background: var(--adv-success); color: #fff;
   border: 2px solid #fff;
   display: grid; place-items: center;
   font-size: 14px; font-weight: 900;
 }
+.map-node .node-crown {
+  position: absolute; right: -10px; top: -8px;
+  font-size: 20px; line-height: 1;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .25));
+  animation: bobble 2.4s ease-in-out infinite;
+}
 .map-node .node-label {
   display: inline-block; margin-top: 7px;
   font-size: 11.5px; font-weight: 900; color: #fff;
-  background: linear-gradient(135deg, #16A085, #2E86DE);
+  background: linear-gradient(135deg, var(--adv-primary), var(--adv-secondary));
   padding: 2px 9px; border-radius: 100px;
 }
 .map-node .node-title {
   display: block; margin-top: 4px;
   font-size: 13px; font-weight: 900; line-height: 1.2;
-  color: var(--ink);
+  color: var(--adv-text);
   text-shadow: 0 1px 0 rgba(255, 255, 255, .95), 0 0 6px rgba(255, 255, 255, .95);
 }
 .map-node .node-stars {
@@ -521,36 +581,207 @@ strong, b { font-weight: 800; }
 .map-node .node-stars .s { filter: grayscale(1) opacity(.3); }
 .map-node .node-stars .s.on { filter: none; }
 
-.map-node.locked { filter: grayscale(.75); opacity: .78; }
+/* status bukan hanya warna: selalu ada ikon + teks */
+.map-node .node-status {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-top: 5px; padding: 2px 9px;
+  font-size: 10.5px; font-weight: 900; letter-spacing: .2px;
+  background: #fff; color: var(--adv-text);
+  border: 2px solid #CFE6FF; border-radius: 100px;
+  white-space: nowrap;
+}
+.map-node.locked { filter: grayscale(.7); opacity: .82; }
 .map-node.locked:hover .node-pin { transform: none; }
+.map-node.locked .node-pin { border-color: var(--adv-locked); background: #F5F7F9; }
+.map-node.locked .node-status { background: #F1F3F5; border-color: #DFE4EA; color: #6C7683; }
+
+.map-node.done .node-pin { border-color: var(--adv-success); }
+.map-node.done .node-status { background: #EAF7EB; border-color: #C9E8CC; color: #2E7D32; }
+
+.map-node.perfect .node-pin {
+  border-color: var(--adv-warning);
+  box-shadow: var(--sh-md), 0 0 0 6px rgba(255, 200, 61, .32);
+}
+.map-node.perfect .node-status { background: #FFF8E2; border-color: #FFE6A6; color: #8A6100; }
+
 .map-node.current .node-pin {
-  border-color: var(--yellow);
+  border-color: var(--adv-warning);
   animation: pulseGlow 1.8s ease-in-out infinite;
 }
-.map-node .node-here {
-  position: absolute; left: 50%; top: -36px;
+.map-node.current .node-status {
+  background: linear-gradient(135deg, var(--adv-primary), var(--adv-secondary));
+  border-color: transparent; color: #fff;
+}
+.map-node.selected .node-pin { outline: 4px solid rgba(40, 100, 197, .35); outline-offset: 3px; }
+.map-node:not(.locked):hover .node-status { border-color: var(--adv-secondary); }
+
+/* karakter pemain di atas simpul aktif */
+.map-node .node-hero {
+  position: absolute; left: 50%; top: -46px;
   transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 5px;
   white-space: nowrap;
-  background: var(--yellow); color: #4A3A00;
+  background: #fff; color: var(--adv-primary);
+  border: 3px solid var(--adv-secondary);
+  border-radius: 100px; padding: 3px 10px 3px 5px;
   font-size: 11.5px; font-weight: 900;
-  padding: 3px 10px; border-radius: 100px;
   box-shadow: var(--sh-sm);
   animation: hereBounce 1.5s ease-in-out infinite;
 }
+.map-node .node-hero i { font-style: normal; font-size: 17px; line-height: 1; }
 @keyframes hereBounce {
   0%, 100% { transform: translateX(-50%) translateY(0); }
   50% { transform: translateX(-50%) translateY(-5px); }
 }
 
+/* peti reward di sepanjang jalur */
+.map-chest {
+  position: absolute; z-index: 2;
+  transform: translate(-50%, -50%);
+  padding: 0; border: 0; background: none;
+  font-size: 30px; line-height: 1; cursor: default;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, .2));
+  animation: bobble 3.2s ease-in-out infinite;
+}
+.map-chest.chest-locked { filter: grayscale(1) opacity(.62); animation: none; }
+.map-chest.chest-open { animation: chestGlow 2.6s ease-in-out infinite; }
+@keyframes chestGlow {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); filter: drop-shadow(0 3px 4px rgba(0, 0, 0, .2)); }
+  50% { transform: translate(-50%, -50%) scale(1.1); filter: drop-shadow(0 0 10px rgba(255, 200, 61, .9)); }
+}
+
 .map-legend {
-  display: flex; flex-wrap: wrap; gap: 8px 12px; justify-content: center;
-  margin: 0 0 18px;
-  font-size: 13px; font-weight: 800; color: var(--ink-soft);
+  display: flex; flex-wrap: wrap; gap: 8px 10px; justify-content: center;
+  margin: 12px 0 4px;
+  font-size: 12.5px; font-weight: 800; color: var(--ink-soft);
 }
 .map-legend span {
-  background: rgba(255, 255, 255, .9);
+  background: rgba(255, 255, 255, .95);
+  border: 2px solid #DDEBF9;
   border-radius: 100px; padding: 5px 12px;
   box-shadow: var(--sh-sm);
+}
+
+/* ============================================================
+ *  PANEL DETAIL BAB (22.6) — ilustrasi lokasi, nama bab,
+ *  materi, deskripsi misi, jumlah soal, target, reward, Mulai.
+ * ============================================================ */
+.adv-detail {
+  position: relative;
+  background: var(--adv-card);
+  border: 4px solid #D6E9FF;
+  border-radius: 26px;
+  overflow: hidden;
+  box-shadow: var(--sh-md);
+  animation: popIn .35s cubic-bezier(.3, 1.4, .5, 1) both;
+}
+@media (min-width: 1040px) {
+  .adv-detail { position: sticky; top: calc(var(--topbar-h) + 14px); }
+}
+
+.adv-detail-head {
+  position: relative;
+  text-align: center;
+  padding: 18px 16px 16px;
+  color: #fff;
+  background:
+    radial-gradient(120% 90% at 50% -25%, rgba(255, 255, 255, .38), transparent 62%),
+    linear-gradient(135deg, hsl(var(--adv-h, 210) 68% 54%), hsl(var(--adv-h, 210) 72% 40%));
+}
+.adv-detail-head .ad-emoji {
+  display: block; font-size: 54px; line-height: 1;
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .25));
+  animation: bobble 3s ease-in-out infinite;
+}
+.adv-detail-head .ad-chapter {
+  display: inline-block; margin-top: 9px;
+  background: rgba(255, 255, 255, .22);
+  border: 2px solid rgba(255, 255, 255, .55);
+  border-radius: 100px; padding: 3px 12px;
+  font-size: 11.5px; font-weight: 900; letter-spacing: .5px;
+  text-transform: uppercase;
+}
+.adv-detail-head h3 {
+  font-size: 21px; font-weight: 900; margin-top: 6px;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, .28);
+}
+.adv-detail-head .ad-status {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-top: 10px; padding: 4px 13px;
+  background: #fff; border-radius: 100px;
+  font-size: 12px; font-weight: 900;
+  color: var(--adv-text);
+  box-shadow: var(--sh-sm);
+}
+.adv-detail-head .ad-status.st-locked { color: #6C7683; background: #F1F3F5; }
+.adv-detail-head .ad-status.st-done { color: #2E7D32; background: #EAF7EB; }
+.adv-detail-head .ad-status.st-perfect { color: #8A6100; background: #FFF8E2; }
+.adv-detail-head .ad-status.st-current { color: #5A3900; background: linear-gradient(135deg, var(--adv-warning), #F2A000); }
+
+.adv-detail-body { padding: 14px 16px 18px; }
+
+.ad-row {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 9px 0;
+  border-bottom: 2px dashed #E7F0FA;
+}
+.ad-row:last-of-type { border-bottom: 0; }
+.ad-row .ad-ico { font-size: 17px; line-height: 1.35; flex: 0 0 auto; }
+.ad-row .ad-k {
+  display: block; font-size: 10.5px; font-weight: 900;
+  text-transform: uppercase; letter-spacing: .5px;
+  color: #8A94A3; margin-bottom: 2px;
+}
+.ad-row .ad-v { font-size: 13.5px; font-weight: 800; color: var(--adv-text); line-height: 1.45; }
+
+.ad-topics { display: flex; flex-wrap: wrap; gap: 6px; }
+.ad-topics span {
+  background: #EAF3FF; border: 2px solid #CFE6FF;
+  color: var(--adv-primary);
+  border-radius: 100px; padding: 3px 10px;
+  font-size: 11.5px; font-weight: 900;
+}
+
+.ad-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  margin-top: 12px;
+}
+.ad-stat {
+  background: #F4FAFF; border: 3px solid #DCEBFB;
+  border-radius: 16px; text-align: center; padding: 8px 4px;
+}
+.ad-stat b { display: block; font-size: 17px; font-weight: 900; color: var(--adv-primary); }
+.ad-stat small {
+  display: block; font-size: 9.5px; font-weight: 900;
+  text-transform: uppercase; letter-spacing: .3px; color: #8A94A3;
+  margin-top: 2px;
+}
+
+.ad-reward {
+  display: flex; align-items: center; gap: 9px;
+  margin-top: 12px; padding: 10px 12px;
+  background: linear-gradient(135deg, #FFF8E2, #FFF1C9);
+  border: 3px solid #FFE6A6; border-radius: 16px;
+  font-size: 12.5px; font-weight: 900; color: #7A5A00;
+}
+.ad-reward i { font-style: normal; font-size: 22px; }
+
+.ad-actions { display: flex; flex-direction: column; gap: 9px; margin-top: 14px; }
+
+.adv-detail .btn-start {
+  background: linear-gradient(180deg, var(--adv-secondary), var(--adv-primary));
+  color: #fff;
+  border-radius: 100px;
+  font-size: 18px; padding: 15px 20px;
+  box-shadow: 0 6px 0 #1B4690, 0 12px 24px rgba(40, 100, 197, .32);
+}
+.adv-detail .btn-start:active { box-shadow: 0 2px 0 #1B4690; }
+
+.ad-lock-note {
+  background: #F4F6F8; border: 3px solid #E1E5EA;
+  border-radius: 16px; padding: 10px 12px;
+  font-size: 12.5px; font-weight: 800; color: #6C7683;
+  text-align: center; line-height: 1.45;
 }
 
 /* ---------- 9. LAYAR MAIN ---------- */
@@ -1222,8 +1453,10 @@ code {
 
 /* ============================================================
  *  MODE PETUALANGAN 2D (Khusus Jalur 🧭 Petualangan)
- *  Peta tetap terlihat saat menjawab soal, karakter 2D berjalan
- *  di jalur bab, dan mode TK & SD tetap utuh tanpa berubah.
+ *  Gaya "Fantasy Learning Adventure" (rancangan_ui.md §22):
+ *  palet biru #2864C5 / #42B7E9, sudut bulat, shadow lembut,
+ *  soal jadi fokus utama, umpan balik langsung & ringan.
+ *  Mode TK & SD tetap utuh tanpa berubah.
  * ============================================================ */
 
 /* Mode biasa (TK & SD): sembunyikan kanvas petualangan, tampilkan play-top biasa */
@@ -1239,15 +1472,15 @@ code {
   width: 100%;
   max-width: 960px;
   margin: 0 auto;
-  padding: 10px 14px 8px;
-  background: rgba(255, 255, 255, .82);
+  padding: 10px 14px 10px;
+  background: linear-gradient(180deg, rgba(234, 246, 255, .96), rgba(255, 255, 255, .88));
   backdrop-filter: blur(14px);
-  border-bottom: 3px solid rgba(91, 75, 232, .18);
-  box-shadow: 0 6px 20px rgba(43, 35, 80, .09);
+  border-bottom: 3px solid rgba(40, 100, 197, .18);
+  box-shadow: 0 6px 20px rgba(36, 52, 91, .1);
   flex-direction: column;
 }
 
-/* HUD atas petualangan */
+/* HUD atas petualangan (22.7) */
 .adv-stage-hud {
   display: flex;
   align-items: center;
@@ -1259,25 +1492,27 @@ code {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 5px 12px;
+  padding: 6px 13px;
   border-radius: 100px;
   font-size: 13px;
   font-weight: 900;
-  border: 2px solid #E0DBF5;
+  border: 2px solid #CFE6FF;
   background: #fff;
-  color: var(--ink);
+  color: var(--adv-text);
   cursor: pointer;
-  transition: transform .12s, background .15s, border-color .15s;
+  transition: transform .12s, background .15s, border-color .15s, box-shadow .15s;
+  box-shadow: var(--sh-sm);
 }
-.adv-hud-btn:hover { background: #F3EFFF; border-color: var(--violet); transform: translateY(-1px); }
-.adv-hud-btn:active { transform: translateY(1px); }
-.adv-hud-btn.ghost { min-width: 36px; padding: 5px 10px; }
+.adv-hud-btn:hover { background: #F2F8FF; border-color: var(--adv-secondary); transform: translateY(-1px); }
+.adv-hud-btn:active { transform: translateY(1px); box-shadow: none; }
+.adv-hud-btn:focus-visible { outline: 3px solid var(--adv-primary); outline-offset: 2px; }
+.adv-hud-btn.ghost { min-width: 38px; padding: 6px 10px; }
 .adv-hud-btn.map-btn {
-  background: linear-gradient(135deg, #FFEFBA 0%, #FFFFFF 100%);
-  border-color: #E2B852;
-  color: #7A5300;
+  background: linear-gradient(135deg, #E9F4FF 0%, #FFFFFF 100%);
+  border-color: var(--adv-secondary);
+  color: var(--adv-primary);
 }
-.adv-hud-btn.map-btn:hover { background: #FFF4CE; border-color: #C89928; }
+.adv-hud-btn.map-btn:hover { background: #DFF0FF; border-color: var(--adv-primary); }
 
 .adv-hud-title {
   display: flex;
@@ -1285,14 +1520,18 @@ code {
   gap: 8px;
   font-size: 15px;
   font-weight: 900;
-  color: var(--ink);
+  color: var(--adv-text);
+  min-width: 0;
 }
+.adv-hud-title b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .adv-hud-badge {
-  background: linear-gradient(135deg, #5B4BE8, #7C6BFF);
+  background: linear-gradient(135deg, var(--adv-primary), var(--adv-secondary));
   color: #fff;
   font-size: 11px;
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: 100px;
+  white-space: nowrap;
+  box-shadow: var(--sh-sm);
 }
 .adv-hud-actions {
   display: flex;
@@ -1304,11 +1543,12 @@ code {
   align-items: center;
   gap: 5px;
   background: #fff;
-  border: 2px solid #E4E0F4;
+  border: 2px solid #CFE6FF;
   border-radius: 100px;
-  padding: 4px 12px;
+  padding: 5px 13px;
   font-size: 15px;
   font-weight: 900;
+  color: var(--adv-text);
   box-shadow: var(--sh-sm);
 }
 
@@ -1316,10 +1556,10 @@ code {
 .adv-stage-viewport {
   position: relative;
   width: 100%;
-  border-radius: 18px;
+  border-radius: 20px;
   overflow: hidden;
-  border: 3px solid #D5CEF2;
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .14), 0 4px 14px rgba(43, 35, 80, .08);
+  border: 3px solid #CFE6FF;
+  box-shadow: inset 0 2px 6px rgba(36, 52, 91, .16), 0 4px 14px rgba(36, 52, 91, .1);
   background: #172033;
 }
 .adv-stage-canvas-wrap {
@@ -1364,36 +1604,34 @@ code {
 }
 .trail-stage-done {
   fill: none;
-  stroke: #2ECC71;
+  stroke: var(--adv-success);
   stroke-width: 18;
   stroke-linecap: round;
   stroke-linejoin: round;
-  filter: drop-shadow(0 2px 4px rgba(46, 204, 113, .55));
+  filter: drop-shadow(0 2px 4px rgba(76, 175, 80, .6));
   transition: stroke-dashoffset .5s ease;
 }
 
 /* Simpul Langkah di Peta */
 .adv-wp { cursor: pointer; transition: transform .2s; }
 .adv-wp:hover { transform: scale(1.12); }
-.adv-wp-circle {
-  transition: fill .3s, stroke .3s, transform .25s;
-}
+.adv-wp-circle { transition: fill .3s, stroke .3s, transform .25s; }
 .adv-wp.cleared .adv-wp-circle {
-  fill: #2ECC71;
-  stroke: #27AE60;
+  fill: var(--adv-success);
+  stroke: #388E3C;
   stroke-width: 3;
 }
 .adv-wp.current .adv-wp-circle {
-  fill: #FFD166;
-  stroke: #F39C12;
+  fill: var(--adv-warning);
+  stroke: #E8A400;
   stroke-width: 3.5;
-  filter: drop-shadow(0 0 6px rgba(243, 156, 18, .75));
+  filter: drop-shadow(0 0 6px rgba(255, 200, 61, .85));
 }
 .adv-wp.upcoming .adv-wp-circle {
-  fill: #EAE6F8;
-  stroke: #B4ACD4;
+  fill: #E3EDF7;
+  stroke: #A9C3DE;
   stroke-width: 2.5;
-  opacity: .85;
+  opacity: .9;
 }
 .adv-wp-label {
   font-family: inherit;
@@ -1404,14 +1642,14 @@ code {
 }
 .adv-wp.cleared .adv-wp-label { fill: #fff; }
 .adv-wp.current .adv-wp-label { fill: #5A3900; font-weight: 900; }
-.adv-wp.upcoming .adv-wp-label { fill: #6F678E; }
+.adv-wp.upcoming .adv-wp-label { fill: #5B7797; }
 
 /* Lingkaran Berkedip pada Simpul Aktif */
 .adv-beacon {
   fill: none;
-  stroke: #F39C12;
+  stroke: var(--adv-warning);
   stroke-width: 3;
-  opacity: .9;
+  opacity: .95;
   animation: beaconPulse 1.8s ease-out infinite;
   transform-origin: center;
 }
@@ -1478,7 +1716,7 @@ code {
   100% { transform: scale(.2) translateY(-20px); opacity: 0; }
 }
 
-/* Banner Info Langkah di Bawah Peta */
+/* Banner Info Langkah di Bawah Peta (hati + pos + tantangan) */
 .adv-step-bar {
   display: flex;
   align-items: center;
@@ -1486,30 +1724,33 @@ code {
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 8px;
-  padding: 6px 14px;
-  background: rgba(246, 244, 255, .95);
-  border-radius: 12px;
-  border: 2px solid #E5E1F6;
+  padding: 7px 14px;
+  background: #fff;
+  border-radius: 100px;
+  border: 3px solid #D6E9FF;
+  box-shadow: var(--sh-sm);
 }
 .adv-step-left {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 .adv-step-indicator {
   font-size: 12px;
   font-weight: 900;
   color: #fff;
-  background: linear-gradient(135deg, #16A085, #2980B9);
-  padding: 3px 10px;
+  background: linear-gradient(135deg, var(--adv-primary), var(--adv-secondary));
+  padding: 4px 12px;
   border-radius: 100px;
   white-space: nowrap;
+  box-shadow: var(--sh-sm);
 }
 .adv-step-encounter {
   font-size: 13px;
   font-weight: 900;
-  color: var(--ink);
+  color: var(--adv-text);
 }
 .adv-step-hearts {
   display: flex;
@@ -1518,105 +1759,171 @@ code {
 }
 .adv-step-hearts .heart { font-size: 20px; line-height: 1; }
 
-/* Timer di bawah banner petualangan */
+/* Timer di bawah banner petualangan (22.7) */
 .adv-timer {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 6px;
+  gap: 9px;
+  margin-top: 7px;
 }
 .adv-timer-track {
   flex: 1;
-  height: 12px;
+  height: 13px;
   border-radius: 100px;
-  background: #E4E1F2;
+  background: #DDE9F7;
   overflow: hidden;
-  box-shadow: inset 0 2px 4px rgba(43, 35, 80, .1);
+  box-shadow: inset 0 2px 4px rgba(36, 52, 91, .14);
 }
 .adv-timer-fill {
   height: 100%;
   width: 100%;
   border-radius: 100px;
-  background: linear-gradient(90deg, #2ECC71, #1ABC9C);
+  background: linear-gradient(90deg, var(--adv-secondary), var(--adv-primary));
   transition: background .3s;
 }
-.adv-timer.warn .adv-timer-fill { background: linear-gradient(90deg, #F39C12, #E67E22); }
-.adv-timer.danger .adv-timer-fill { background: linear-gradient(90deg, #E74C3C, #C0392B); }
-.adv-timer.unlimited .adv-timer-fill { background: linear-gradient(90deg, #7C6BFF, #4ECDC4); }
+.adv-timer.warn .adv-timer-fill { background: linear-gradient(90deg, var(--adv-warning), #F2A000); }
+.adv-timer.danger .adv-timer-fill { background: linear-gradient(90deg, var(--adv-danger), #D8434E); }
+.adv-timer.unlimited .adv-timer-fill { background: linear-gradient(90deg, var(--adv-secondary), #7ED4F5); }
 .adv-timer-label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 900;
-  min-width: 36px;
+  min-width: 40px;
   text-align: right;
-  color: var(--ink-soft);
+  color: var(--adv-text);
   font-variant-numeric: tabular-nums;
 }
-.adv-timer.unlimited .adv-timer-label { font-size: 17px; color: var(--violet); }
+.adv-timer.unlimited .adv-timer-label { font-size: 18px; color: var(--adv-primary); }
 
-/* Gaya Quest / Kartu Soal Khusus Mode Petualangan */
+/* Kartu soal mode petualangan (22.7): soal jadi elemen utama */
 .screen-play.is-adv-mode .play-main {
   max-width: 760px;
-  padding-top: 10px;
+  padding-top: 12px;
 }
 .screen-play.is-adv-mode .q-card {
-  border: 4px solid #D4A95B;
-  background: linear-gradient(180deg, #FFFDF8 0%, #F9F4E7 100%);
-  box-shadow: 0 10px 24px rgba(120, 85, 30, .14), inset 0 0 40px rgba(220, 190, 130, .09);
+  border: 5px solid var(--adv-primary);
+  background: linear-gradient(180deg, #FFFFFF 0%, #F4FAFF 100%);
+  box-shadow: 0 12px 28px rgba(40, 100, 197, .18);
   position: relative;
 }
 .screen-play.is-adv-mode .q-card::before {
-  content: "⚔️ TANTANGAN PETUALANGAN";
+  content: "⚔️ ADVENTURE CHALLENGE";
   position: absolute;
-  top: -14px;
+  top: -15px;
   left: 50%;
   transform: translateX(-50%);
-  background: linear-gradient(135deg, #B8860B, #D4AF37);
+  background: linear-gradient(135deg, var(--adv-primary), var(--adv-secondary));
   color: #fff;
   font-size: 11px;
   font-weight: 900;
   letter-spacing: .5px;
-  padding: 3px 14px;
+  padding: 4px 15px;
   border-radius: 100px;
   box-shadow: var(--sh-sm);
-  border: 2px solid #FFF;
+  border: 2px solid #fff;
+  white-space: nowrap;
 }
+/* label pita mengikuti bahasa aktif */
+.screen-play.is-adv-mode .q-card.challenge-id::before { content: "⚔️ TANTANGAN PETUALANGAN"; }
+
+.screen-play.is-adv-mode .q-text { color: var(--adv-text); }
+.screen-play.is-adv-mode .q-text b { color: var(--adv-primary); }
+.screen-play.is-adv-mode .q-topic {
+  background: #E4F1FF;
+  color: var(--adv-primary);
+}
+
+/* Empat pilihan jawaban besar & ramah anak */
 .screen-play.is-adv-mode .opt {
-  background: linear-gradient(180deg, #FFFFFF 0%, #F7F3EA 100%);
-  border: 3px solid #D4C19A;
-  box-shadow: 0 5px 0 #A89269, 0 6px 12px rgba(60, 45, 20, .08);
-  border-radius: 16px;
-  color: #2D2319;
+  background: #fff;
+  border: 4px solid #D3E4F7;
+  box-shadow: 0 5px 0 #B9D2EF, 0 6px 12px rgba(36, 52, 91, .1);
+  border-radius: 18px;
+  color: var(--adv-text);
 }
 .screen-play.is-adv-mode .opt::before {
-  background: #F1E5C9;
-  color: #7A5300;
-  border: 1px solid #D5BD8C;
+  background: #E4F1FF;
+  color: var(--adv-primary);
+  border: 1px solid #C9DEF6;
 }
 .screen-play.is-adv-mode .opt:not(:disabled):hover {
-  background: #FFFBF2;
-  border-color: #B58A3C;
+  background: #F5FBFF;
+  border-color: var(--adv-secondary);
   transform: translateY(-2px);
 }
 .screen-play.is-adv-mode .opt:not(:disabled):active {
   transform: translateY(3px);
-  box-shadow: 0 1px 0 #A89269;
+  box-shadow: 0 1px 0 #B9D2EF;
 }
 .screen-play.is-adv-mode .opt.correct {
-  background: linear-gradient(180deg, #58D68D, #27AE60);
-  border-color: #1E8449;
-  box-shadow: 0 5px 0 #196F3D;
+  background: linear-gradient(180deg, #6ECB72, var(--adv-success));
+  border-color: #388E3C;
+  box-shadow: 0 5px 0 #2E7D32;
   color: #fff;
 }
 .screen-play.is-adv-mode .opt.correct::before { background: rgba(255, 255, 255, .3); color: #fff; }
 .screen-play.is-adv-mode .opt.wrong {
-  background: linear-gradient(180deg, #EC7063, #C0392B);
-  border-color: #922B21;
-  box-shadow: 0 5px 0 #78281F;
+  background: linear-gradient(180deg, #F5838B, var(--adv-danger));
+  border-color: #D8434E;
+  box-shadow: 0 5px 0 #C13B45;
   color: #fff;
 }
 .screen-play.is-adv-mode .opt.wrong::before { background: rgba(255, 255, 255, .3); color: #fff; }
 
-/* Modal Peta Dunia (10 Bab) */
+/* Tombol petunjuk & lewati khas petualangan */
+.screen-play.is-adv-mode .play-foot .btn-soft {
+  background: #EAF3FF;
+  color: var(--adv-primary);
+  box-shadow: 0 4px 0 #C9DEF6;
+}
+.screen-play.is-adv-mode .play-foot .btn-soft:hover { background: #DFF0FF; }
+
+/* Bobi di mode petualangan */
+.screen-play.is-adv-mode .play-bobi {
+  border-color: #CFE6FF;
+  background: rgba(255, 255, 255, .95);
+}
+
+/* --- 22.8 Umpan balik jawaban: bintang, skor, combo, motivasi --- */
+.screen-play.is-adv-mode .feedback { background: rgba(36, 52, 91, .5); }
+.screen-play.is-adv-mode .feedback-box {
+  position: relative;
+  border: 5px solid var(--adv-secondary);
+  background: linear-gradient(180deg, #FFFFFF 0%, #F6FBFF 100%);
+}
+.screen-play.is-adv-mode .feedback-title.good { color: var(--adv-success); }
+.screen-play.is-adv-mode .feedback-title.bad { color: var(--adv-danger); }
+.screen-play.is-adv-mode .feedback-sub .pt {
+  background: #FFF4D1; color: #8A6300;
+}
+.screen-play.is-adv-mode .feedback-sub .encouragement {
+  background: #E4F1FF; color: var(--adv-primary);
+}
+.fb-star {
+  position: absolute;
+  left: 50%; top: 46%;
+  font-size: 26px; line-height: 1;
+  pointer-events: none;
+  animation: fbStarUp .95s ease-out forwards;
+}
+@keyframes fbStarUp {
+  0% { opacity: 0; transform: translate(-50%, 0) scale(.3) rotate(0); }
+  22% { opacity: 1; }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx, 0px)), -130px) scale(1.3) rotate(30deg);
+  }
+}
+
+/* Combo badge khas petualangan */
+.screen-play.is-adv-mode .combo-badge {
+  background: linear-gradient(180deg, var(--adv-warning), #F2A000);
+  color: #5A3900;
+  border: 3px solid #fff;
+}
+
+/* ============================================================
+ *  MODAL PETA DUNIA (10 BAB) — §22.5
+ * ============================================================ */
 .adv-world-modal { z-index: 9999; }
 .adv-world-box {
   max-width: 680px;
@@ -1625,6 +1932,8 @@ code {
   display: flex;
   flex-direction: column;
   padding: 20px;
+  border: 5px solid #D6E9FF;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F6FBFF 100%);
 }
 .adv-world-head {
   display: flex;
@@ -1633,7 +1942,7 @@ code {
   gap: 12px;
   margin-bottom: 12px;
   padding-bottom: 10px;
-  border-bottom: 2px solid #EBE7F7;
+  border-bottom: 2px solid #E1EDF9;
 }
 .adv-world-title {
   display: flex;
@@ -1641,22 +1950,23 @@ code {
   gap: 10px;
 }
 .adv-world-ico { font-size: 32px; line-height: 1; }
-.adv-world-head h3 { margin: 0; font-size: 18px; font-weight: 900; color: var(--ink); }
+.adv-world-head h3 { margin: 0; font-size: 18px; font-weight: 900; color: var(--adv-text); }
 .adv-world-head p { margin: 2px 0 0; font-size: 12.5px; color: var(--ink-soft); }
 .adv-world-close {
-  background: #F0EDFA;
-  border: 0;
-  width: 34px;
-  height: 34px;
+  background: #EAF3FF;
+  border: 2px solid #CFE6FF;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   font-size: 16px;
   font-weight: 900;
+  color: var(--adv-primary);
   cursor: pointer;
   display: grid;
   place-items: center;
-  transition: background .15s;
+  transition: background .15s, transform .12s;
 }
-.adv-world-close:hover { background: #E1DBF5; }
+.adv-world-close:hover { background: #DFF0FF; transform: translateY(-1px); }
 .adv-world-map-wrap {
   flex: 1 1 auto;
   overflow-y: auto;
@@ -1669,9 +1979,14 @@ code {
   gap: 12px;
   margin-top: 14px;
   padding-top: 12px;
-  border-top: 2px solid #EBE7F7;
+  border-top: 2px solid #E1EDF9;
 }
-.adv-world-stat { font-size: 13.5px; font-weight: 900; color: var(--ink); }
+.adv-world-stat { font-size: 13.5px; font-weight: 900; color: var(--adv-text); }
+.adv-world-foot .btn-primary {
+  background: linear-gradient(180deg, var(--adv-secondary), var(--adv-primary));
+  box-shadow: 0 6px 0 #1B4690, 0 12px 24px rgba(40, 100, 197, .3);
+}
+.adv-world-foot .btn-primary:active { box-shadow: 0 2px 0 #1B4690; }
 
 /* Daftar Bab Mini di Peta Dunia */
 .adv-world-grid {
@@ -1688,37 +2003,63 @@ code {
   gap: 12px;
   padding: 10px 12px;
   background: #fff;
-  border: 2px solid #E5E1F6;
-  border-radius: 14px;
+  border: 3px solid #D6E9FF;
+  border-radius: 18px;
   position: relative;
-  transition: transform .12s, border-color .15s;
+  transition: transform .12s, border-color .15s, box-shadow .15s;
 }
+.adv-world-card:hover { transform: translateY(-2px); box-shadow: var(--sh-sm); }
 .adv-world-card.active {
-  border-color: #E2B852;
-  background: linear-gradient(135deg, #FFFDF5 0%, #FFF8E6 100%);
-  box-shadow: 0 0 0 2px #F39C12;
+  border-color: var(--adv-primary);
+  background: linear-gradient(135deg, #F3F9FF 0%, #EAF3FF 100%);
+  box-shadow: 0 0 0 3px rgba(66, 183, 233, .45);
 }
-.adv-world-card.cleared { border-color: #A9DFBF; }
-.adv-world-card.locked { opacity: .65; filter: grayscale(.6); }
+.adv-world-card.cleared { border-color: #BFE3C3; background: #F4FBF5; }
+.adv-world-card.locked { opacity: .72; filter: grayscale(.6); border-color: #E1E5EA; background: #F7F9FA; }
 .adv-world-card .card-emoji { font-size: 26px; }
 .adv-world-card .card-info { flex: 1; min-width: 0; }
 .adv-world-card .card-title {
   display: block;
   font-size: 13px;
   font-weight: 900;
-  color: var(--ink);
+  color: var(--adv-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.adv-world-card .card-sub { font-size: 11px; color: var(--ink-soft); }
+.adv-world-card .card-sub { font-size: 11px; color: var(--ink-soft); font-weight: 700; }
 .adv-world-card .card-badge {
   font-size: 10.5px;
   font-weight: 900;
-  padding: 2px 7px;
+  padding: 3px 8px;
   border-radius: 100px;
+  white-space: nowrap;
 }
-.adv-world-card.active .card-badge { background: #F39C12; color: #fff; }
-.adv-world-card.cleared .card-badge { background: #2ECC71; color: #fff; }
-.adv-world-card.locked .card-badge { background: #BDC3C7; color: #fff; }
+.adv-world-card.active .card-badge { background: var(--adv-primary); color: #fff; }
+.adv-world-card.cleared .card-badge { background: var(--adv-success); color: #fff; }
+.adv-world-card.locked .card-badge { background: var(--adv-locked); color: #fff; }
+.adv-world-card .card-stars {
+  display: block; font-size: 11px; letter-spacing: -1px; margin-top: 2px;
+}
 
+/* ============================================================
+ *  LAYAR HASIL MODE PETUALANGAN (22.9)
+ * ============================================================ */
+.screen-result.is-adv .result-card {
+  border-color: var(--adv-secondary);
+  background: linear-gradient(180deg, #FFFFFF 0%, #F6FBFF 100%);
+}
+.result-trophy {
+  font-size: 62px; line-height: 1;
+  animation: trophyIn .6s cubic-bezier(.3, 1.6, .5, 1) both;
+  filter: drop-shadow(0 8px 12px rgba(40, 100, 197, .3));
+  margin-bottom: -4px;
+}
+.result-trophy[hidden] { display: none; }
+@keyframes trophyIn {
+  0% { opacity: 0; transform: scale(0) rotate(-45deg); }
+  70% { opacity: 1; transform: scale(1.15) rotate(6deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+.screen-result.is-adv .result-box { background: #F2F8FF; border-color: #D6E9FF; }
+.screen-result.is-adv .result-box b { color: var(--adv-primary); }

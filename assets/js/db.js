@@ -886,11 +886,62 @@
     return store.save(bytes).then(function () { return syncToServer(bytes); });
   };
 
-  /** True bila halaman dijalankan lewat HTTP (ada server.js). */
+  /** URL API papan peringkat eksternal (Google Apps Script), bila diisi. */
+  function remoteApi() {
+    var c = MG.CONFIG;
+    var u = c && c.LEADERBOARD_API;
+    return (typeof u === 'string') ? u.trim() : '';
+  }
+  DB.remoteApi = remoteApi;
+
+  /** True bila halaman dijalankan lewat HTTP (ada server.js) atau API eksternal. */
   function serverReachable() {
+    if (remoteApi()) return true;
     return !!(global.fetch && global.location &&
       global.location.protocol.indexOf('http') === 0);
   }
+
+  /* ------------------------------------------------------------
+   *  Probe sekali: apakah benar-benar ada API di belakang halaman?
+   *
+   *  Di GitHub Pages protocol-nya https jadi serverReachable() true,
+   *  padahal server.js tidak pernah ada di sana. Karena itu tab online
+   *  memanggil probeOnline() dulu sebelum meminta papan peringkat.
+   * ------------------------------------------------------------ */
+  var probePromise = null;
+
+  /**
+   * @param {boolean} [force]  true = hapus hasil cek sebelumnya (dipakai uji)
+   * @returns {Promise<boolean>}  true bila ada API papan peringkat
+   */
+  DB.probeOnline = function (force) {
+    if (force) probePromise = null;
+    if (probePromise) return probePromise;
+
+    var remote = remoteApi();
+    if (remote) {
+      var ping = remote + (remote.indexOf('?') < 0 ? '?' : '&') + 'action=ping';
+      probePromise = fetch(ping, { cache: 'no-store' })
+        .then(function (r) { return !!r.ok; })
+        .catch(function () { return false; });
+      return probePromise;
+    }
+
+    if (!serverReachable()) {
+      probePromise = Promise.resolve(false);
+      return probePromise;
+    }
+
+    probePromise = fetch('/api/info', { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) return false;
+        // harus JSON milik server.js, bukan halaman HTML GitHub Pages
+        return r.json().then(function (j) { return !!(j && j.app); },
+          function () { return false; });
+      })
+      .catch(function () { return false; });
+    return probePromise;
+  };
 
   /** Id pemain untuk slot simpanan server (biar tiap orang punya salinan sendiri). */
   function slotKey() {
@@ -898,9 +949,12 @@
     return p && p.uid ? p.uid : 'browser';
   }
 
-  /* Sinkronisasi opsional ke server.js (kalau ada) */
+  /* Sinkronisasi opsional ke server.js (kalau ada).
+   * Bila LEADERBOARD_API diisi (Google Sheets), blob SQLite tidak dikirim
+   * ke sana — Apps Script hanya untuk papan peringkat, bukan penyimpanan. */
   function syncToServer(bytes) {
     if (!serverSync || !serverReachable()) return Promise.resolve();
+    if (remoteApi()) return Promise.resolve();
     try {
       return fetch('/api/state?slot=' + encodeURIComponent(slotKey()), {
         method: 'POST',
@@ -997,6 +1051,10 @@
    *    2. server lokal   -> POST /api/score   (kirim hasil kita)
    *    3. server lokal   -> GET  /api/leaderboard (lihat semua pemain)
    *
+   *  Bila MG.CONFIG.LEADERBOARD_API diisi, langkah 2 & 3 memakai URL
+   *  itu (Google Sheets via Apps Script) supaya tetap jalan di GitHub
+   *  Pages yang tidak punya server.
+   *
    *  Kalau game dibuka dengan klik 2x (file://) tidak ada server,
    *  jadi papan peringkat online otomatis disembunyikan.
    * ============================================================ */
@@ -1015,29 +1073,46 @@
     if (!s || !s.uid) return Promise.resolve(false);
     lastPublished = now;
 
-    return fetch('/api/score', {
+    var remote = remoteApi();
+    return fetch(remote || '/api/score', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      // Apps Script: text/plain supaya permintaan dianggap sederhana
+      // dan tidak memicu preflight CORS yang ditolak.
+      headers: remote
+        ? { 'Content-Type': 'text/plain;charset=UTF-8' }
+        : { 'Content-Type': 'application/json' },
       body: JSON.stringify(s)
-    }).then(function (r) { return r.ok; })
-      .catch(function () { return false; });
+    }).then(function (r) {
+      // server.js menjawab {ok:true}; Apps Script selalu 200 jadi isi
+      // JSON-nya yang menentukan berhasil atau tidak.
+      return r.json().then(function (j) {
+        return !!(j && j.ok !== false);
+      }, function () { return !!r.ok; });
+    }).catch(function () { return false; });
   };
 
   /**
    * Ambil papan peringkat dari server.
-   * @returns {Promise<{ok:boolean, rows:Array, myRank:number}>}
+   * @returns {Promise<{ok:boolean, reason?:string, rows:Array, myRank:number}>}
    */
   DB.fetchLeaderboard = function (limit) {
-    if (!serverReachable()) return Promise.resolve({ ok: false, rows: [], myRank: 0 });
+    if (!serverReachable()) {
+      return Promise.resolve({ ok: false, reason: 'noapi', rows: [], myRank: 0 });
+    }
     var me = DB.getPlayer();
-    var url = '/api/leaderboard?limit=' + (limit || 20) +
-      (me && me.uid ? '&uid=' + encodeURIComponent(me.uid) : '');
+    var uidQ = (me && me.uid) ? '&uid=' + encodeURIComponent(me.uid) : '';
+    var remote = remoteApi();
+    var url = remote
+      ? remote + (remote.indexOf('?') < 0 ? '?' : '&') + 'action=leaderboard&limit=' + (limit || 20) + uidQ
+      : '/api/leaderboard?limit=' + (limit || 20) + uidQ;
     return fetch(url).then(function (r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
     }).then(function (j) {
       return { ok: true, rows: (j && j.rows) || [], myRank: (j && j.rank) || 0 };
-    }).catch(function () { return { ok: false, rows: [], myRank: 0 }; });
+    }).catch(function () {
+      return { ok: false, reason: 'unreachable', rows: [], myRank: 0 };
+    });
   };
 
   DB.exportBase64 = function () {

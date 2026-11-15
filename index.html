@@ -166,14 +166,22 @@
         <span id="levels-progress-text" data-id="0 dari 20 level selesai">0 of 20 levels done</span>
       </div>
 
-      <!-- Peta jelajah khusus jalur Petualangan (muncul saat tab 🧭 aktif) -->
-      <div class="adv-map" id="adv-map" hidden aria-label="Adventure map"></div>
-      <p class="map-legend" id="adv-map-legend" hidden>
-        <span data-id="📍 Kamu di sini">📍 You are here</span>
-        <span data-id="🔒 Bab terkunci">🔒 Locked chapter</span>
-        <span data-id="✓ Bab selesai">✓ Chapter cleared</span>
-        <span data-id="⭐ Bintang terbaik">⭐ Best stars</span>
-      </p>
+      <!-- Peta jelajah + panel detail bab (muncul saat tab 🧭 aktif) -->
+      <div class="adv-layout" id="adv-layout" hidden>
+        <div class="adv-map-col">
+          <div class="adv-map" id="adv-map" hidden aria-label="Adventure map"></div>
+          <p class="map-legend" id="adv-map-legend" hidden>
+            <span data-id="📍 Kamu di sini">📍 You are here</span>
+            <span data-id="🔒 Bab terkunci">🔒 Locked chapter</span>
+            <span data-id="▶ Bab siap dimainkan">▶ Chapter available</span>
+            <span data-id="✓ Bab selesai">✓ Chapter cleared</span>
+            <span data-id="👑 Sempurna (3 bintang)">👑 Perfect (3 stars)</span>
+            <span data-id="⭐ Bintang terbaik">⭐ Best stars</span>
+          </p>
+        </div>
+        <!-- 22.6 — Detail level/bab: ilustrasi, materi, misi, soal, target, reward -->
+        <aside class="adv-detail" id="adv-detail" aria-live="polite"></aside>
+      </div>
 
       <div class="level-grid" id="level-grid"></div>
     </div>
@@ -212,6 +220,7 @@
           <b id="adv-hud-name" data-id="Desa Damai">Peaceful Village</b>
         </div>
         <div class="adv-hud-actions">
+          <button class="adv-hud-btn ghost" id="btn-adv-pause" title="Pause the game" data-id-title="Jeda permainan">⏸</button>
           <button class="adv-hud-btn map-btn" id="btn-adv-world-map" title="Open the 10-chapter world map" data-id-title="Buka Peta Dunia 10 Bab">
             🗺️ <span data-id="Peta Dunia">World Map</span>
           </button>
@@ -298,6 +307,7 @@
     <div class="page result-page">
       <div class="result-card">
         <div class="result-confetti" id="result-confetti"></div>
+        <div class="result-trophy" id="result-trophy" hidden>🏆</div>
         <div class="result-mascot" id="result-mascot"></div>
         <div class="result-stars" id="result-stars"></div>
         <h2 id="result-title" data-id="Level Selesai!">Level Complete!</h2>

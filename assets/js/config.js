@@ -20,6 +20,16 @@
     DB_FILE: 'matematika-ajaib.sqlite',
     STORAGE_KEY: 'matematika-ajaib.db',
 
+    /*
+     * PAPAN PERINGKAT ONLINE (opsional)
+     *
+     * Kosongkan ('')  -> memakai server.js lokal (/api/leaderboard).
+     * Diisi URL       -> memakai Google Sheets lewat Web App Apps Script
+     *                    (berakhiran /exec), jadi tetap jalan di GitHub Pages.
+     * Langkah deploy ada di README, skripnya di google-apps-script/.
+     */
+    LEADERBOARD_API: '',
+
     // Penskoran
     SCORE: {
       BASE: 10,           // poin dasar tiap jawaban benar

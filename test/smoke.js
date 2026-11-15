@@ -746,11 +746,23 @@ const ADV_TRACK = `
     var okBtn = Array.prototype.slice.call(document.querySelectorAll('#modal-actions button'))
       .filter(function (b) { return /^OK$/.test(b.textContent.trim()); })[0];
     if (okBtn) { okBtn.click(); await wait(250); }
+    var dLocked = document.getElementById('adv-detail');
+    if (!dLocked || !/Locked/.test(dLocked.textContent)) out.problems.push('panel detail tidak menampilkan status terkunci');
   }
 
-  // klik bab 1 (terbuka) → cerita pembuka muncul
+  // klik bab 1 (terbuka) → panel detail menampilkan bab 1 beserta tombol Mulai
   nodes[0].click();
   await wait(300);
+
+  var detail = document.getElementById('adv-detail');
+  if (!detail || !detail.innerHTML.trim()) out.problems.push('panel detail bab tidak tampil');
+  else if (!/Peaceful Village|Desa Damai/.test(detail.textContent)) {
+    out.problems.push('panel detail tidak menunjuk bab 1');
+  }
+
+  var detailStart = detail ? detail.querySelector('button[data-act="start"]') : null;
+  if (!detailStart) out.problems.push('tombol Mulai di panel detail tidak ada');
+  else { detailStart.click(); await wait(300); }
 
   // cerita pembuka bab harus muncul lebih dulu
   var modal = document.getElementById('modal');

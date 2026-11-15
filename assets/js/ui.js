@@ -13,6 +13,7 @@
 
   var currentScreen = 'home';
   var levelTrack = 'sd';   // jalur di peta level ('sd' | 'tk' | 'adv')
+  var advSelected = 0;     // bab petualangan yang sedang ditampilkan di panel detail
 
   /* ============================================================
    *  NAVIGASI LAYAR
@@ -105,6 +106,7 @@
     var grid = $('#level-grid');
     var mapBox = $('#adv-map');
     var legend = $('#adv-map-legend');
+    var layout = $('#adv-layout');
     grid.innerHTML = '';
     if (mapBox) mapBox.innerHTML = '';
     var track = levelTrack;
@@ -116,12 +118,18 @@
     var unlocked = MG.db.getUnlockedLevel(track);
 
     // Jalur Petualangan memakai peta jelajah; jalur SD & TK tetap pakai kartu.
+    if (layout) layout.hidden = !isAdv;
     if (mapBox) mapBox.hidden = !isAdv;
     if (legend) legend.hidden = !isAdv;
     grid.hidden = isAdv;
 
     if (isAdv) {
+      // bab terpilih divalidasi dulu supaya panel detail selalu menunjuk bab valid
+      if (advSelected < 1 || advSelected > levels.length || advSelected > unlocked) {
+        advSelected = Math.min(unlocked, levels.length);
+      }
       renderAdvMap(levels, progress, unlocked);
+      renderAdvDetail(advSelected);
     } else {
       levels.forEach(function (LV) {
         var p = progress[LV.n];
@@ -243,6 +251,41 @@
 
     mapBox.appendChild(el('span', 'map-badge', T('🧭 Adventure Map', '🧭 Peta Petualangan')));
 
+    /* indikator progres (22.5): jumlah bab tuntas + total bintang */
+    var doneCount = 0, starCount = 0;
+    levels.forEach(function (LV) {
+      var pr = progress[LV.n];
+      if (pr && pr.cleared) doneCount++;
+      if (pr) starCount += pr.best_stars || 0;
+    });
+    var prog = el('div', 'adv-map-progress');
+    prog.innerHTML =
+      '<span>' + doneCount + '/' + levels.length + ' ' + T('chapters', 'bab') + '</span>' +
+      '<span class="amp-bar"><span class="progressbar-fill" style="width:' +
+      Math.round(doneCount / levels.length * 100) + '%"></span></span>' +
+      '<span class="amp-stars">⭐ ' + starCount + '</span>';
+    mapBox.appendChild(prog);
+
+    /* peti reward di sepanjang jalur — terbuka setelah babnya tuntas */
+    var ADV_CHESTS = [3, 6, 9];
+    ADV_CHESTS.forEach(function (c, i) {
+      var idx = c - 1;
+      var a = pts[idx - 1] || pts[idx];
+      var b = pts[idx];
+      if (!a || !b) return;
+      var open = !!(progress[c] && progress[c].cleared);
+      var chest = el('span', 'map-chest ' + (open ? 'chest-open' : 'chest-locked'), open ? '🎁' : '🧰');
+      chest.style.left = ((a.x + b.x) / 2 + (i % 2 ? 8 : -8)) + '%';
+      chest.style.top = ((a.y + b.y) / 2) + '%';
+      chest.title = open
+        ? T('Reward chest opened — Chapter ' + c + ' is cleared!', 'Peti reward terbuka — Bab ' + c + ' tuntas!')
+        : T('Reward chest — finish Chapter ' + c + ' to open it.', 'Peti reward — selesaikan Bab ' + c + ' untuk membukanya.');
+      chest.setAttribute('aria-label', chest.title);
+      mapBox.appendChild(chest);
+    });
+
+    var player = MG.db.getPlayer();
+    var avatar = (player && player.avatar) ? player.avatar : '🙂';
     var currentNode = null;
     levels.forEach(function (LV, idx) {
       var pos = pts[idx] || { x: 50, y: 50 };
@@ -250,9 +293,18 @@
       var locked = LV.n > unlocked;
       var stars = p ? p.best_stars : 0;
       var cleared = p && p.cleared;
+      var perfect = stars === 3;
       var isCurrent = !locked && LV.n === unlocked;
+      var isSel = advSelected === LV.n;
 
-      var node = el('button', 'map-node' + (locked ? ' locked' : '') + (isCurrent ? ' current' : ''));
+      var node = el('button', 'map-node' +
+        (locked ? ' locked' : '') +
+        (cleared ? ' done' : '') +
+        (perfect ? ' perfect' : '') +
+        (isCurrent ? ' current' : '') +
+        (isSel ? ' selected' : ''));
+      node.type = 'button';
+      node.setAttribute('data-n', LV.n);
       node.style.left = pos.x + '%';
       node.style.top = pos.y + '%';
       node.style.animationDelay = (0.2 + idx * 0.07) + 's';
@@ -263,25 +315,42 @@
         starsHtml += '<span class="s' + (s2 < stars ? ' on' : '') + '">' + (s2 < stars ? '⭐' : '☆') + '</span>';
       }
 
+      /* status pakai ikon + teks supaya bukan hanya warna (§22.6 UX-5) */
+      var status = locked ? '🔒 ' + T('Locked', 'Terkunci')
+        : perfect ? '👑 ' + T('Perfect', 'Sempurna')
+          : cleared ? '✓ ' + T('Cleared', 'Selesai')
+            : '▶ ' + T('Available', 'Siap main');
+
       node.innerHTML =
         '<span class="node-pin">' +
         '<span class="node-emoji">' + LV.emoji + '</span>' +
         (locked ? '<span class="node-lock">🔒</span>' : '') +
         (cleared ? '<span class="node-check">✓</span>' : '') +
+        (perfect ? '<span class="node-crown">👑</span>' : '') +
         '</span>' +
         '<span class="node-label">' + T('Chapter ', 'Bab ') + LV.n + '</span>' +
         '<span class="node-title">' + LV.title + '</span>' +
-        '<span class="node-stars">' + starsHtml + '</span>';
+        '<span class="node-stars">' + starsHtml + '</span>' +
+        '<span class="node-status">' + status + '</span>';
 
       node.title = MG.levelLabel('adv', LV.n) + '. ' + LV.title + ' — ' + LV.desc;
 
       if (isCurrent) {
-        node.appendChild(el('span', 'node-here', T('📍 You are here', '📍 Kamu di sini')));
+        node.appendChild(el('span', 'node-hero',
+          '<i>' + avatar + '</i>' + T('📍 You are here', '📍 Kamu di sini')));
         currentNode = node;
       }
 
       (function (L, lk) {
-        on(node, 'click', function () { openLevel('adv', L, lk); });
+        on(node, 'click', function () {
+          /* bab terkunci: panel detail ikut menunjuk babnya + modal penjelasan */
+          if (lk) { selectAdvChapter(L.n); openLevel('adv', L, true); return; }
+          /* klik kedua pada bab yang sama = langsung mulai */
+          if (advSelected === L.n) { openLevel('adv', L, false); return; }
+          /* klik pertama = pilih bab, panel detail di sebelah ikut berubah */
+          MG.audio.play('tap');
+          selectAdvChapter(L.n);
+        });
       })(LV, locked);
 
       mapBox.appendChild(node);
@@ -289,6 +358,22 @@
 
     // Gulir ke posisi anak supaya terasa seperti menelusuri peta.
     if (currentNode) setTimeout(function () { scrollToNode(currentNode); }, 350);
+  }
+
+  /** Pilih bab pada peta: sorot simpulnya lalu perbarui panel detail (22.6). */
+  function selectAdvChapter(n) {
+    advSelected = n;
+    $$('#adv-map .map-node').forEach(function (node) {
+      node.classList.toggle('selected', Number(node.getAttribute('data-n')) === n);
+    });
+    renderAdvDetail(n);
+
+    /* layar sempit: panel detail ada di bawah peta, jadi bawa ke pandangan */
+    var detail = $('#adv-detail');
+    if (detail && window.innerWidth < 1040) {
+      try { detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+      catch (e) { /* browser lama: abaikan */ }
+    }
   }
 
   /** Bawa simpul "kamu di sini" ke tengah layar (kalau di luar jangkauan). */
@@ -301,6 +386,106 @@
       try { window.scrollTo({ top: y, behavior: 'smooth' }); }
       catch (e2) { window.scrollTo(0, y); }
     } catch (e) { /* browser lama: abaikan */ }
+  }
+
+  /* ============================================================
+   *  PANEL DETAIL BAB (rancangan_ui.md §22.6)
+   *  Ilustrasi lokasi, nama bab, materi, deskripsi misi,
+   *  jumlah soal, target pencapaian, reward, dan tombol Mulai.
+   * ============================================================ */
+
+  /** Nama tampilan untuk daftar id topik (chip "Materi pembelajaran"). */
+  function topicNames(ids) {
+    var names = [];
+    (ids || []).forEach(function (id) {
+      var nm = (MG.topics && MG.topics.NAMES && MG.topics.NAMES[id]) || id;
+      if (names.indexOf(nm) === -1) names.push(nm);
+    });
+    return names;
+  }
+
+  function renderAdvDetail(n) {
+    var box = $('#adv-detail');
+    if (!box) return;
+    var LV = MG.advLevel(n);
+    if (!LV) return;
+
+    var progress = MG.db.getAllProgress('adv');
+    var unlocked = MG.db.getUnlockedLevel('adv');
+    var p = progress[n];
+    var locked = n > unlocked;
+    var cleared = !!(p && p.cleared);
+    var stars = p ? p.best_stars : 0;
+    var perfect = stars === 3;
+
+    var st = locked
+      ? { cls: 'st-locked', txt: '🔒 ' + T('Locked', 'Terkunci') }
+      : perfect ? { cls: 'st-perfect', txt: '👑 ' + T('Perfect run', 'Sempurna') }
+        : cleared ? { cls: 'st-done', txt: '✓ ' + T('Chapter cleared', 'Bab tuntas') }
+          : { cls: 'st-current', txt: '▶ ' + T('Ready to play', 'Siap dimainkan') };
+
+    var chips = topicNames(LV.topics).map(function (nm) {
+      return '<span>' + U.esc(nm) + '</span>';
+    }).join('');
+    var totalQ = MG.CONFIG.QUESTIONS_PER_LEVEL;
+
+    var actions;
+    if (locked) {
+      actions =
+        '<div class="ad-lock-note">🔒 ' + T('Finish <b>', 'Selesaikan <b>') +
+        MG.levelLabel('adv', n - 1) + '</b> ' +
+        T('first to open this chapter.', 'dulu untuk membuka bab ini.') + '</div>' +
+        '<button class="btn btn-primary" data-act="prev" data-n="' + n + '">▶️ ' +
+        T('Play ', 'Main ') + MG.levelLabel('adv', n - 1) + '</button>';
+    } else {
+      actions =
+        '<button class="btn btn-start" data-act="start" data-n="' + n + '">▶️ ' +
+        (cleared ? T('Replay Chapter ', 'Ulangi Bab ') : T('Start Chapter ', 'Mulai Bab ')) + n + '</button>' +
+        '<button class="btn btn-ghost" data-act="story" data-n="' + n + '">📖 ' +
+        T('Read the story', 'Baca cerita') + '</button>';
+    }
+
+    box.innerHTML =
+      '<div class="adv-detail-head" style="--adv-h:' + LV.hue + '">' +
+      '<span class="ad-emoji">' + LV.emoji + '</span>' +
+      '<span class="ad-chapter">' + MG.levelLabel('adv', n) + '</span>' +
+      '<h3>' + U.esc(LV.title) + '</h3>' +
+      '<span class="ad-status ' + st.cls + '">' + st.txt + '</span>' +
+      '</div>' +
+      '<div class="adv-detail-body">' +
+      '<div class="ad-row"><span class="ad-ico">🎯</span><div>' +
+      '<span class="ad-k">' + T('Mission', 'Misi') + '</span>' +
+      '<span class="ad-v">' + LV.desc + '</span></div></div>' +
+      '<div class="ad-row"><span class="ad-ico">📚</span><div>' +
+      '<span class="ad-k">' + T('Learning material', 'Materi pembelajaran') + '</span>' +
+      '<div class="ad-topics">' + chips + '</div></div></div>' +
+      '<div class="ad-stats">' +
+      '<div class="ad-stat"><b>' + totalQ + '</b><small>' + T('Questions', 'Soal') + '</small></div>' +
+      '<div class="ad-stat"><b>≥60%</b><small>' + T('Target', 'Target') + '</small></div>' +
+      '<div class="ad-stat"><b>⭐' + stars + '/3</b><small>' + T('Stars', 'Bintang') + '</small></div>' +
+      '</div>' +
+      '<div class="ad-reward"><i>🎁</i><span>' +
+      T('Reward: up to 3 ⭐ stars, new 🏅 badges, and a high-score record.',
+        'Reward: sampai 3 ⭐ bintang, 🏅 lencana baru, dan rekor poin tertinggi.') +
+      '</span></div>' +
+      '<div class="ad-actions">' + actions + '</div>' +
+      '</div>';
+  }
+
+  /** Buka cerita bab langsung dari panel detail. */
+  function showAdvStory(n) {
+    var LV = MG.advLevel(n);
+    if (!LV || !LV.story) { UI.startLevel(n, 'adv'); return; }
+    storyShown['adv-' + n] = 1;   // jangan tampilkan dua kali dalam satu sesi
+    U.modal({
+      emoji: LV.emoji,
+      title: MG.levelLabel('adv', n) + ' — ' + LV.title,
+      text: '<b>' + LV.desc + '</b><br><br>' + LV.story,
+      buttons: [
+        { label: T('🎮 Start Adventure', '🎮 Mulai Petualangan'), cls: 'btn-primary', onClick: function () { UI.startLevel(n, 'adv'); } },
+        { label: T('Maybe later', 'Nanti dulu'), onClick: function () { if (currentScreen !== 'home') UI.show('levels'); } }
+      ]
+    });
   }
 
   /* ============================================================
@@ -693,11 +878,17 @@
       var starTxt = '';
       for (var s = 0; s < 3; s++) starTxt += (s < stars ? '⭐' : '☆');
 
+      var subTxt = isCur ? '📍 ' + T('Playing now', 'Sedang Dimainkan')
+        : isClear ? '✓ ' + T('Cleared', 'Tuntas')
+          : isLock ? '🔒 ' + T('Locked', 'Terkunci')
+            : '▶ ' + T('Available', 'Tersedia');
+
       html += '<div class="adv-world-card' + (isCur ? ' active' : '') + (isClear ? ' cleared' : '') + (isLock ? ' locked' : '') + '">' +
         '<span class="card-emoji">' + LV.emoji + '</span>' +
         '<div class="card-info">' +
           '<strong class="card-title">' + T('Chapter ', 'Bab ') + LV.n + ' · ' + LV.title + '</strong>' +
-          '<span class="card-sub">' + (isCur ? T('📍 Playing now', '📍 Sedang Dimainkan') : isClear ? T('Cleared (', 'Tuntas (') + starTxt + ')' : isLock ? T('🔒 Locked', '🔒 Terkunci') : T('Available', 'Tersedia')) + '</span>' +
+          '<span class="card-sub">' + subTxt + '</span>' +
+          '<span class="card-stars">' + starTxt + '</span>' +
         '</div>' +
         '<span class="card-badge">' + (isCur ? T('NOW', 'KINI') : isClear ? T('DONE', 'SELESAI') : isLock ? T('LOCKED', 'KUNCI') : T('OPEN', 'BUKA')) + '</span>' +
       '</div>';
@@ -948,17 +1139,29 @@
     drawLeaderboard(podium, tbody, lbRows);
     if (sub) sub.textContent = T('Loading ranking from the server…', 'Memuat peringkat dari server…');
 
-    // kirim skor kita dulu supaya peringkat di server selalu ter-update
-    MG.db.publishScore(true).then(function () {
-      return MG.db.fetchLeaderboard(20);
+    // pastikan benar-benar ada API (server.js atau LEADERBOARD_API);
+    // di GitHub Pages protocol https membuat "ada server" terlihat benar
+    MG.db.probeOnline().then(function (alive) {
+      if (!alive) return { ok: false, reason: 'noapi' };
+      // kirim skor kita dulu supaya peringkat di server selalu ter-update
+      return MG.db.publishScore(true).then(function () {
+        return MG.db.fetchLeaderboard(20);
+      });
     }).then(function (res) {
       lbLoading = false;
       if (UI.current() !== 'leaderboard') return;
-      if (!res.ok) {
+      if (!res || !res.ok) {
         if (sub) sub.textContent = T('Ranking from the server', 'Peringkat dari server');
         lbRows = [];
         drawLeaderboard(podium, tbody, []);
-        if (note) note.textContent = T('The server cannot be reached. Check whether server.js is still running.', 'Server tidak bisa dihubungi. Cek apakah server.js masih berjalan.');
+        if (note) {
+          note.innerHTML = (res && res.reason === 'noapi')
+            ? T('No leaderboard server was found on this page. Run <code>node server.js</code> ',
+                'Tidak ada server papan peringkat di halaman ini. Jalankan <code>node server.js</code> ') +
+              T('or double-click <code>Main Game.command</code>, or set <code>MG.CONFIG.LEADERBOARD_API</code> to your Google Sheets Web App URL.',
+                'atau klik 2x <code>Main Game.command</code>, atau isi <code>MG.CONFIG.LEADERBOARD_API</code> dengan URL Web App Google Sheets Anda.')
+            : T('The server cannot be reached. Check whether server.js is still running.', 'Server tidak bisa dihubungi. Cek apakah server.js masih berjalan.');
+        }
         return;
       }
       lbRows = res.rows.map(function (r) {
@@ -1073,6 +1276,10 @@
       var advStage2 = $('#adv-play-stage');
       if (advStage2) advStage2.hidden = true;
     }
+
+    // pita "Tantangan Petualangan" pada kartu soal ikut bahasa aktif
+    var qCard = $('#q-card');
+    if (qCard) qCard.classList.toggle('challenge-id', MG.I18N.current() === 'id');
 
     $('#play-level-name').innerHTML = '<span style="font-size:20px">' + LV.emoji + '</span> ' +
       MG.levelLabel(track, n) + ' · ' + LV.title;
@@ -1395,7 +1602,28 @@
 
     next.textContent = res.finished ? T('See Results ➜', 'Lihat Hasil ➜') : T('Next ➜', 'Lanjut ➜');
     fb.classList.add('show');
+
+    // 22.8 — jawaban benar di mode Petualangan: animasi bintang naik
+    if (res.correct) {
+      var gst = MG.game.state();
+      if (gst && gst.track === 'adv') starBurst();
+    }
   };
+
+  /** Animasi bintang sederhana di kotak umpan balik (tanpa menghalangi tombol). */
+  function starBurst() {
+    var box = $('#feedback-box');
+    if (!box) return;
+    for (var i = 0; i < 6; i++) {
+      (function (i) {
+        var s = el('span', 'fb-star', i % 2 ? '✨' : '⭐');
+        s.style.setProperty('--dx', Math.round((i - 2.5) * 46 + (Math.random() * 24 - 12)) + 'px');
+        s.style.animationDelay = (i * 0.07) + 's';
+        box.appendChild(s);
+        setTimeout(function () { if (s.parentNode) s.parentNode.removeChild(s); }, 1500);
+      })(i);
+    }
+  }
 
   UI.dismissFeedback = function () {
     $('#feedback').classList.remove('show');
@@ -1420,6 +1648,15 @@
 
     var track = MG.normTrack(res.track);
     var passed = res.cleared;
+
+    // layar hasil mode Petualangan (22.9): piala + palet petualangan
+    var resultScreen = $('#screen-result');
+    if (resultScreen) resultScreen.classList.toggle('is-adv', track === 'adv');
+    var trophy = $('#result-trophy');
+    if (trophy) {
+      trophy.hidden = track !== 'adv';
+      if (track === 'adv') trophy.textContent = passed ? '🏆' : '🎗️';
+    }
 
     // tampilkan
     $('#result-mascot').innerHTML = MG.art.mascot(passed ? 'cheer' : 'sad');
@@ -1877,6 +2114,41 @@
     on($('#btn-adv-quit'), 'click', function () {
       $('#btn-quit').click();
     });
+
+    /* Jeda permainan: hentikan timer, lanjutkan saat tombol Continue ditekan */
+    on($('#btn-adv-pause'), 'click', function () {
+      var st = MG.game.state();
+      if (!st || st.finished || $('#feedback').classList.contains('show')) return;
+      MG.audio.play('tap');
+      UI.stopTimer();
+      var modal = $('#modal');
+      function detach() { if (modal) modal.removeEventListener('click', onBackdrop); }
+      function onBackdrop(e) { if (e.target === modal) { detach(); U.closeModal(); UI.startTimer(); } }
+      U.modal({
+        emoji: '⏸️',
+        title: T('Game Paused', 'Permainan Dijeda'),
+        text: T('Stretch a little. Tap <b>Continue</b> when you are ready!', 'Peregangan dulu. Tekan <b>Lanjut</b> kalau sudah siap!'),
+        buttons: [
+          { label: T('▶️ Continue', '▶️ Lanjut'), cls: 'btn-primary', close: false, onClick: function () { detach(); U.closeModal(); MG.audio.play('click'); UI.startTimer(); } },
+          { label: T('🗺️ Level Map', '🗺️ Peta Level'), close: false, onClick: function () { detach(); U.closeModal(); UI.show('levels'); } },
+          { label: T('🏠 Home', '🏠 Beranda'), close: false, onClick: function () { detach(); U.closeModal(); UI.show('home'); UI.refreshHome(); } }
+        ]
+      });
+      if (modal) modal.addEventListener('click', onBackdrop);
+    });
+
+    /* Panel detail bab pada peta Petualangan */
+    on($('#adv-detail'), 'click', function (e) {
+      var b = e.target && e.target.closest ? e.target.closest('button[data-act]') : null;
+      if (!b) return;
+      var act = b.getAttribute('data-act');
+      var n = parseInt(b.getAttribute('data-n'), 10) || advSelected;
+      MG.audio.play('click');
+      if (act === 'start') UI.startLevel(n, 'adv');
+      else if (act === 'prev') UI.startLevel(n - 1, 'adv');
+      else if (act === 'story') showAdvStory(n);
+    });
+
     on($('#btn-adv-world-map'), 'click', function () {
       MG.audio.play('tap');
       showAdvWorldMap();

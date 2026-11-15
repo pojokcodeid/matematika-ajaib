@@ -175,7 +175,7 @@ Buka **🏆 Papan Peringkat** dari beranda. Ada dua tab:
 | Tab | Isinya | Butuh server? |
 |---|---|---|
 | 📱 **Perangkat Ini** | Semua pemain yang terdaftar di perangkat ini | tidak |
-| 🌐 **Semua Pemain** | Pemain dari HP & komputer lain yang memakai `server.js` yang sama | ya |
+| 🌐 **Semua Pemain** | Pemain dari HP & komputer lain: dari `server.js`, atau dari Google Sheets bila `LEADERBOARD_API` diisi | ya |
 
 Peringkat dihitung dari **bintang → level selesai → ketelitian**, dengan bobot
 bintang jauh lebih besar (10.000 vs 100 vs 100 poin). Jadi mengumpulkan bintang
@@ -185,6 +185,46 @@ ditandai **kuning** dan diberi keterangan *(kamu)*.
 
 Saat game ditutup dengan klik 2x (`file://`), tab **🌐 Semua Pemain**
 otomatis menampilkan petunjuk cara menjalankan `server.js`, bukan error.
+
+### 🌍 Papan peringkat di GitHub Pages (Google Sheets)
+
+GitHub Pages itu **static hosting**: hanya menyajikan file HTML/CSS/JS.
+`server.js` tidak pernah berjalan di sana, jadi tab **🌐 Semua Pemain**
+akan menampilkan *"Tidak ada server papan peringkat di halaman ini"*.
+Supaya skor tetap terkumpul, arahkan papan peringkat ke **Google
+Sheets** lewat Apps Script — gratis, tanpa server, dan riwayatnya bisa
+Anda buka kapan saja di Sheet.
+
+1. Buka **https://script.google.com** → proyek baru, lalu tempel isi
+   [`google-apps-script/Leaderboard.gs`](google-apps-script/Leaderboard.gs).
+2. Klik **Run** → fungsi `setup` → izinkan akses (*Advanced → Go to
+   project → Allow*). Skrip membuat spreadsheet **"Magic Math —
+   Leaderboard"** sendiri. (Mau memakai spreadsheet milik Anda? Isi
+   `SPREADSHEET_ID` di bagian atas skrip.)
+3. **Deploy → New deployment → Type: Web app**
+   - *Execute as*: **Me**
+   - *Who has access*: **Anyone**
+   - klik **Deploy**, salin URL yang berakhiran **`/exec`**.
+4. Tempel URL itu di `assets/js/config.js`:
+
+   ```js
+   LEADERBOARD_API: 'https://script.google.com/macros/s/XXXX/exec',
+   ```
+
+5. Upload ulang ke GitHub Pages. Tab **🌐 Semua Pemain** kini membaca &
+   menulis ke Sheet itu.
+
+Catatan:
+
+- Dengan `LEADERBOARD_API` diisi, versi lokal (Cara 1/2/3) juga memakai
+  Google Sheets. Kosongkan lagi (`''`) untuk kembali ke `server.js`.
+- Yang dikirim ke Sheets **hanya baris papan peringkat** (nama, bintang,
+  level selesai, ketelitian, poin). Progres game tetap di perangkat
+  (IndexedDB) dan tetap bisa diekspor seperti biasa.
+- Skor tidak pernah turun: kalau baris pemain sudah ada, diambil nilai
+  terbaik yang pernah tercatat — sama seperti `server.js`.
+- Kalau tab masih bilang "server tidak bisa dihubungi", ulangi langkah 3
+  (akses harus **Anyone**) dan pastikan URL berakhiran `/exec`.
 
 ### Bagaimana satu orang bisa lanjut di perangkat berbeda?
 
@@ -216,9 +256,12 @@ game/
 ├── Main Game.bat              ← peluncur 2-klik untuk Windows (samoa perlakuannya)
 ├── server.js                  ← server lokal opsional (Node.js, tanpa dependency)
 ├── package.json               ← hanya untuk `npm test` / `npm start`, tanpa dependency
+├── google-apps-script/
+│   └── Leaderboard.gs         ← backend papan peringkat untuk GitHub Pages (Google Sheets)
 ├── assets/
 │   ├── css/style.css          ← seluruh tampilan
 │   ├── js/
+│   │   ├── i18n.js            ← dua bahasa (English default & Indonesia), dimuat paling awal
 │   │   ├── config.js          ← pengaturan global + definisi 8 level TK, 20 level SD & 10 bab Petualangan
 │   │   ├── utils.js           ← pembantu: acak, format angka, modal, toast
 │   │   ├── art.js             ← 100+ ilustrasi SVG (digambar sendiri)
@@ -344,7 +387,7 @@ node test/smoke.js             # jalankan game di Chrome sungguhan
 | Berkas uji | Yang diperiksa |
 |---|---|
 | `topics.test.js` | Tiap soal: selalu tepat 4 pilihan berbeda, jawaban benar selalu ada di pilihan, teks & ilustrasi tidak rusak, tiap level menghasilkan 10 soal |
-| `db.test.js` | 8 tabel, 20 level SD dimainkan penuh → 60 bintang, seluruh lencana, ekspor → reset → impor, hasil ekspor dibuka lagi dengan `node:sqlite`, **isolasi antar-pemain** (pemain baru mulai dari nol, tidak ada data yang bocor), hapus pemain tidak merusak pemain lain, pengaturan waktu per-pemain, urutan papan peringkat lokal, **jalur TK terpisah dari SD walau nomor levelnya sama**, **jalur Petualangan (10 bab, cerita pembuka, progres terpisah)**, dan mode **waktu tanpa batas** |
+| `db.test.js` | 8 tabel, 20 level SD dimainkan penuh → 60 bintang, seluruh lencana, ekspor → reset → impor, hasil ekspor dibuka lagi dengan `node:sqlite`, **isolasi antar-pemain** (pemain baru mulai dari nol, tidak ada data yang bocor), hapus pemain tidak merusak pemain lain, pengaturan waktu per-pemain, urutan papan peringkat lokal, **probe papan peringkat (membedakan `file://`, GitHub Pages, `server.js` & Apps Script)**, **kirim & baca papan peringkat lewat `LEADERBOARD_API` (Google Sheets)**, **jalur TK terpisah dari SD walau nomor levelnya sama**, **jalur Petualangan (10 bab, cerita pembuka, progres terpisah)**, dan mode **waktu tanpa batas** |
 | `server.test.js` | Server menyala, berkas statis tersaji, path traversal ditolak, progres terkirim & ditarik ulang, **slot simpanan terpisah per pemain**, papan peringkat terurut benar, rekor tidak pernah turun saat data dikirim ulang, dan uid berbahaya dibersihkan |
 | `smoke.js` | Menjalankan `index.html` di Chrome headless lewat DevTools Protocol pada dua mode (server `server.js` sungguhan & `file://`): tidak ada error, database siap, 20 kartu level SD & 8 kartu level TK muncul, satu level bisa dimainkan sampai selesai lewat klik UI, bintang bertambah, tujuh layar terbuka bersih, **tambah pemain lewat UI benar-benar memisahkan progres**, papan peringkat daring benar-benar terisi dari server, pengaturan tersimpan, **tab jalur TK berfungsi tanpa mengubah bintang SD**, **tab jalur Petualangan menampilkan peta jelajah berisi 10 simpul bab + cerita pembuka tanpa mengubah bintang TK/SD**, **timer tanpa batas menampilkan ∞**, waktu habis mengurangi hati, dan **ganti bahasa 🌐 (English → Bahasa Indonesia, pilihan tersimpan, halaman dimuat ulang bersih)** |
 | `shot.js` | *Utilitas dev (bukan uji)* — mengambil screenshot Peta Petualangan di Chrome headless: `node test/shot.js keluaran.png [lebar] [tinggi]` |

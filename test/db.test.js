@@ -696,6 +696,95 @@ async function main() {
     return '2 baris, posisiku #' + lb.myRank;
   });
 
+  await testAsync('probeOnline membedakan server.js, GitHub Pages, dan Apps Script', async () => {
+    const OLD = MG.CONFIG.LEADERBOARD_API;
+    const setLoc = (p) => {
+      win.location = { protocol: p, href: p + '//contoh/', origin: p === 'file:' ? 'null' : p + '//contoh' };
+    };
+
+    // 1. klik 2x (file://) — tidak ada server sama sekali
+    setLoc('file:');
+    assert.strictEqual(await DB.probeOnline(true), false, 'file:// seharusnya false');
+
+    // 2. GitHub Pages: protocol https, tapi /api/info dijawab 404/HTML
+    setLoc('https:');
+    win.fetch = function () {
+      return Promise.resolve({ ok: false, status: 404, json: () => Promise.reject(new Error('bukan JSON')) });
+    };
+    assert.strictEqual(await DB.probeOnline(true), false, 'GitHub Pages seharusnya false');
+
+    // 3. server.js sungguhan: /api/info menjawab JSON yang punya "app"
+    win.fetch = function () {
+      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({ app: 'Matematika Ajaib' }) });
+    };
+    assert.strictEqual(await DB.probeOnline(true), true, 'server.js seharusnya true');
+
+    // 4. Google Sheets: action=ping dijawab ok
+    const REMOTE = 'https://script.google.com/macros/s/ABC/exec';
+    MG.CONFIG.LEADERBOARD_API = REMOTE;
+    const urls = [];
+    win.fetch = function (url) {
+      urls.push(url);
+      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({ ok: true }) });
+    };
+    assert.strictEqual(await DB.probeOnline(true), true, 'Apps Script seharusnya true');
+    assert.strictEqual(urls[0], REMOTE + '?action=ping', 'ping salah: ' + urls[0]);
+
+    MG.CONFIG.LEADERBOARD_API = OLD;
+    win.fetch = undefined;
+    setLoc('file:');
+    return 'file://, GitHub Pages, server.js & Apps Script dibedakan';
+  });
+
+  await testAsync('LEADERBOARD_API memakai Google Sheets, bukan /api/*', async () => {
+    const OLD = MG.CONFIG.LEADERBOARD_API;
+    const REMOTE = 'https://script.google.com/macros/s/ABC123/exec';
+    MG.CONFIG.LEADERBOARD_API = REMOTE;
+    win.location = { protocol: 'https:', href: 'https://user.github.io/', origin: 'https://user.github.io' };
+
+    const calls = [];
+    win.fetch = function (url, opts) {
+      calls.push({ url: url, opts: opts || {} });
+      if (opts && opts.method === 'POST') {
+        return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({ ok: true, rank: 3 }) });
+      }
+      return Promise.resolve({
+        ok: true, status: 200,
+        json: () => Promise.resolve({
+          rows: [{ rank: 1, uid: 'zzz', name: 'Budi', avatar: '🐼', grade: 2, stars: 60, cleared: 20, score: 13020, accuracy: 1, plays: 21, points: 60100 }],
+          rank: 3, total: 4
+        })
+      });
+    };
+
+    DB.setServerSync(true);
+    const published = await DB.publishScore(true);
+    const lb = await DB.fetchLeaderboard(10);
+    await DB.saveNow();                 // seharusnya TIDAK kirim /api/state
+    DB.setServerSync(false);
+    MG.CONFIG.LEADERBOARD_API = OLD;
+
+    assert.strictEqual(published, true, 'kirim skor ke Apps Script gagal');
+    assert.strictEqual(lb.ok, true);
+    assert.strictEqual(lb.rows.length, 1);
+    assert.strictEqual(lb.myRank, 3);
+
+    assert.strictEqual(calls[0].url, REMOTE, 'POST tidak ke URL remote: ' + calls[0].url);
+    assert.strictEqual(calls[0].opts.method, 'POST');
+    // text/plain supaya tidak memicu preflight CORS yang ditolak Apps Script
+    assert.ok(/text\/plain/.test((calls[0].opts.headers || {})['Content-Type'] || ''),
+      'Content-Type seharusnya text/plain, dapat ' + JSON.stringify(calls[0].opts.headers));
+
+    const get = calls.find((c) => c.opts.method !== 'POST');
+    assert.ok(get, 'tidak ada permintaan GET papan peringkat');
+    assert.ok(get.url.indexOf(REMOTE + '?action=leaderboard') === 0, 'GET salah: ' + get.url);
+    assert.ok(get.url.indexOf('limit=10') > 0, 'limit tidak dikirim: ' + get.url);
+
+    assert.ok(!calls.some((c) => c.url.indexOf('/api/') === 0),
+      'masih memakai /api/*: ' + JSON.stringify(calls.map((c) => c.url)));
+    return calls.length + ' panggilan ke ' + REMOTE;
+  });
+
   await testAsync('server yang gagal tidak membuat game error', async () => {
     win.fetch = function () { return Promise.reject(new Error('jaringan putus')); };
     assert.strictEqual((await DB.fetchLeaderboard()).ok, false);
